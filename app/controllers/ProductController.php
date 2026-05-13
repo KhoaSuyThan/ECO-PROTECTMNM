@@ -1,0 +1,138 @@
+<?php
+require_once 'app/config/database.php';
+require_once 'app/models/ProductModel.php';
+require_once 'app/models/CategoryModel.php';
+
+class ProductController {
+    private $productModel;
+    private $categoryModel;
+    private $db;
+
+    public function __construct() {
+        // Khởi tạo kết nối Database và Model
+        $this->db = (new Database())->getConnection();
+        $this->productModel = new ProductModel($this->db);
+        $this->categoryModel = new CategoryModel($this->db);
+    }
+
+    public function index() {
+        $this->list();
+    }
+
+    public function list() {
+        // Lấy danh sách từ Database thay vì Session
+        $products = $this->productModel->getProducts();
+        include 'app/views/product/list.php';
+    }
+
+    public function add() {
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        include 'app/views/product/add.php';
+    }
+
+    public function save() {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = $_POST['price'] ?? 0;
+            $category_id = $_POST['category_id'] ?? null;
+
+            // Xử lý ảnh nếu có
+            $image = "";
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $target_dir = "uploads/";
+                if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+                $image = $target_dir . time() . "_" . basename($_FILES["image"]["name"]);
+                move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+            }
+
+            // Gọi Model để lưu vào Database
+            $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image);
+            
+            if ($result === true) {
+                // Lưu thành công, quay về danh sách (chú ý đường dẫn dự án của bạn)
+                header('Location: /Product/list');
+                exit();
+            } else {
+                $errors = $result; // Nếu Model trả về mảng lỗi validation
+                $categories = (new CategoryModel($this->db))->getCategories();
+                include 'app/views/product/add.php';
+            }
+        }
+    }
+
+    public function edit($id = null) {
+        // Sửa lỗi Fatal Error bằng cách kiểm tra ID
+        if (!$id) {
+            header('Location: /Product/list');
+            exit();
+        }
+
+        $product = $this->productModel->getProductById($id);
+        $categories = $this->categoryModel->getCategories();
+
+        if ($product) {
+            include 'app/views/product/edit.php';
+        } else {
+            die('Không tìm thấy sản phẩm này trong hệ thống.');
+        }
+    }
+
+
+    public function update() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'];
+            $name = $_POST['name'];
+            $description = $_POST['description'];
+            $price = $_POST['price'];
+            $category_id = $_POST['category_id'];
+
+            // Xử lý ảnh
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $image = $this->uploadImage($_FILES['image']);
+            } else {
+                // Nếu không chọn ảnh mới, lấy lại đường dẫn ảnh cũ từ input hidden
+                $image = $_POST['existing_image'] ?? "";
+            }
+
+            if ($this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image)) {
+                header('Location: /Product/list');
+                exit();
+            }
+        }
+    }
+
+    public function delete($id) {
+        if ($this->productModel->deleteProduct($id)) {
+            header('Location: /Product/list');
+            exit();
+        }
+    }
+
+    // Hàm hỗ trợ upload hình ảnh
+    private function uploadImage($file) {
+        $target_dir = "uploads/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+        $file_name = time() . "_" . basename($file["name"]);
+        $target_file = $target_dir . $file_name;
+        
+        if (move_uploaded_file($file["tmp_name"], $target_file)) {
+            return $target_file;
+        }
+        return "";
+    }
+
+    // File: app/controllers/ProductController.php
+
+    public function show($id) {
+        $product = $this->productModel->getProductById($id);
+        if ($product) {
+            include 'app/views/product/show.php';
+        } else {
+            die('Sản phẩm không tồn tại.');
+        }
+    }
+}
