@@ -9,11 +9,78 @@
     <style>
         body { background-color: #f8f9fa; }
         .navbar-brand { font-weight: 800; color: #2d6a4f !important; }
+        
+        /* Hiệu ứng mượt mà cho các nút trên Header */
+        .nav-link {
+            font-weight: 600;
+            color: #4a4a4a !important;
+            transition: color 0.2s ease;
+        }
+        .nav-link:hover {
+            color: #2d6a4f !important;
+        }
+        /* Style riêng cho nút Thêm sản phẩm nhanh */
+        .btn-add-quick {
+            background-color: #2d6a4f;
+            color: white !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-add-quick:hover {
+            background-color: #1b4332;
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.2);
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4 py-3">
     <div class="container">
-        <a class="navbar-brand" href="/Product/list">🌿 ECO-PROTECT</a>
+        <a class="navbar-brand fs-4" href="/Product/list">🌿 ECO-PROTECT</a>
+        
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavNav" aria-controls="navbarNavNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNavNav">
+            <ul class="navbar-nav ms-auto align-items-center gap-2 mt-3 mt-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link px-3" href="/Product/list">
+                        <i class="fas fa-box-open me-2 text-success"></i>Sản phẩm
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link px-3" href="/Category/list">
+                        <i class="fas fa-tags me-2 text-warning"></i>Danh mục
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <?php 
+                        // Tính tổng số lượng sản phẩm đang có trong giỏ hàng session
+                        $total_items = 0;
+                        if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+                            foreach ($_SESSION['cart'] as $item) {
+                                $total_items += $item['quantity'];
+                            }
+                        }
+                    ?>
+                    <a class="nav-link px-3 position-relative" href="/Product/cart" title="Xem giỏ hàng">
+                        <i class="fas fa-shopping-cart me-2 text-info fs-5"></i>Giỏ hàng
+                        <?php if ($total_items > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                <?php echo $total_items; ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-add-quick rounded-pill px-4 shadow-sm" href="/Product/add">
+                        <i class="fas fa-plus-circle me-1"></i> Thêm sản phẩm
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 </nav>

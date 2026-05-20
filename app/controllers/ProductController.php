@@ -135,4 +135,116 @@ class ProductController {
             die('Sản phẩm không tồn tại.');
         }
     }
+
+    // Thêm các phương thức này vào bên trong class ProductController trong file app/controllers/ProductController.php
+
+    public function addToCart($id) {
+        $product = $this->productModel->getProductById($id);
+        if (!$product) {
+            die("Không tìm thấy sản phẩm.");
+        }
+
+        // Khởi tạo giỏ hàng nếu chưa có
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+
+        // Nếu sản phẩm đã có trong giỏ, tăng số lượng
+        if (isset($_SESSION['cart'][$id])) {
+            $_SESSION['cart'][$id]['quantity']++;
+        } else {
+            // Nếu chưa có, thêm mới vào giỏ
+            $_SESSION['cart'][$id] = [
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => 1,
+                'image' => $product->image
+            ];
+        }
+        // Quay về trang hiển thị giỏ hàng
+        header('Location: /Product/cart');
+        exit();
+    }
+
+    public function cart() {
+        $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+        include 'app/views/product/cart.php';
+    }
+
+    // Tính năng bổ sung: Xóa sản phẩm khỏi giỏ hàng
+    public function removeFromCart($id) {
+        if (isset($_SESSION['cart'][$id])) {
+            unset($_SESSION['cart'][$id]);
+        }
+        header('Location: /Product/cart');
+        exit();
+    }
+
+    public function checkout() {
+        // Nếu giỏ hàng trống thì không cho vào trang thanh toán
+        if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+            header('Location: /Product/list');
+            exit();
+        }
+        include 'app/views/product/checkout.php';
+    }
+
+    public function processCheckout() {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $name = $_POST['name'] ?? '';
+            $phone = $_POST['phone'] ?? '';
+            $address = $_POST['address'] ?? '';
+
+            if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+                die("Giỏ hàng của bạn đang trống.");
+            }
+
+            // Sử dụng Transaction để đảm bảo an toàn dữ liệu
+            $this->db->beginTransaction();
+            try {
+                // 1. Lưu vào bảng orders
+                $query = "INSERT INTO orders (name, phone, address) VALUES (:name, :phone, :address)";
+                $stmt = $this->db->prepare($query);
+                $stmt->execute([
+                    ':name' => htmlspecialchars(strip_tags($name)),
+                    ':phone' => htmlspecialchars(strip_tags($phone)),
+                    ':address' => htmlspecialchars(strip_tags($address))
+                ]);
+                $order_id = $this->db->lastInsertId();
+
+                // 2. Lưu vào bảng order_details
+                $cart = $_SESSION['cart'];
+                foreach ($cart as $product_id => $item) {
+                    $query = "INSERT INTO order_details (order_id, product_id, quantity, price) 
+                            VALUES (:order_id, :product_id, :quantity, :price)";
+                    $stmt = $this->db->prepare($query);
+                    $stmt->execute([
+                        ':order_id' => $order_id,
+                        ':product_id' => $product_id,
+                        ':quantity' => $item['quantity'],
+                        ':price' => $item['price']
+                    ]);
+                }
+
+                // Xóa giỏ hàng sau khi đặt thành công
+                unset($_SESSION['cart']);
+                
+                // Xác nhận hoàn tất transaction
+                $this->db->commit();
+
+                // Chuyển hướng sang trang cảm ơn
+                header('Location: /Product/orderConfirmation');
+                exit();
+
+            } catch (Exception $e) {
+                // Có lỗi xảy ra, hoàn tác lại toàn bộ để tránh rác DB
+                $this->db->rollBack();
+                die("Đã xảy ra lỗi khi xử lý đơn hàng: " . $e->getMessage());
+            }
+        }
+    }
+
+    public function orderConfirmation() {
+        include 'app/views/product/orderConfirmation.php';
+    }
 }

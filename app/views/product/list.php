@@ -132,9 +132,6 @@
             <h1 class="display-5 fw-bold mb-2">Sản Phẩm Xanh</h1>
             <p class="lead opacity-75 mb-0">Cùng chúng tôi lan tỏa lối sống bền vững.</p>
         </div>
-        <a href="/Product/add" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-success shadow">
-            <i class="fas fa-plus-circle me-2"></i>Thêm sản phẩm mới
-        </a>
     </div>
 
     <!-- Product Grid -->
@@ -174,9 +171,9 @@
                                 <div class="price-value"><?php echo number_format((float)$product->price, 0, ',', '.'); ?> <small>đ</small></div>
                             </div>
                             <!-- Cart Icon Button -->
-                            <button class="btn-cart shadow-sm">
+                            <a href="/Product/addToCart/<?php echo $product->id; ?>" class="btn-cart shadow-sm d-flex align-items-center justify-content-center text-decoration-none">
                                 <i class="fas fa-shopping-basket"></i>
-                            </button>
+                            </a>
                         </div>
                     </div>
 
