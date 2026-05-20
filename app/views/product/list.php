@@ -123,6 +123,13 @@
         transition: 0.3s;
     }
     .delete-link:hover { color: #d63031; }
+
+    /* Custom Number Input */
+    input[type=number].qty-input::-webkit-inner-spin-button,
+    input[type=number].qty-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 </style>
 
 <div class="container mt-4">
@@ -168,12 +175,19 @@
                         <div class="d-flex justify-content-between align-items-end mb-4">
                             <div>
                                 <div class="price-label">Giá đóng góp</div>
-                                <div class="price-value"><?php echo number_format((float)$product->price, 0, ',', '.'); ?> <small>đ</small></div>
+                                <div class="price-value text-nowrap"><?php echo number_format((float)$product->price, 0, ',', '.'); ?> <small>đ</small></div>
                             </div>
-                            <!-- Cart Icon Button -->
-                            <a href="/Product/addToCart/<?php echo $product->id; ?>" class="btn-cart shadow-sm d-flex align-items-center justify-content-center text-decoration-none">
-                                <i class="fas fa-shopping-basket"></i>
-                            </a>
+                            <!-- Form Add to Cart -->
+                            <form action="/Product/addToCart/<?php echo $product->id; ?>" method="POST" class="d-flex align-items-center m-0 gap-1">
+                                <div class="d-flex align-items-center rounded-pill border" style="height: 38px; padding: 0 4px; background: #fff; border-color: #e2e8f0 !important;">
+                                    <button type="button" class="btn btn-sm btn-link text-decoration-none text-dark d-flex align-items-center justify-content-center" style="width: 24px; height: 30px; padding: 0; opacity: 0.7;" onclick="let input = this.nextElementSibling; if(input.value > 1) input.value--;"><i class="fas fa-minus" style="font-size: 10px;"></i></button>
+                                    <input type="number" name="quantity" value="1" min="1" class="form-control qty-input border-0 text-center fw-bold p-0" style="width: 32px; height: 30px; box-shadow: none; -moz-appearance: textfield; font-size: 1rem;">
+                                    <button type="button" class="btn btn-sm btn-link text-decoration-none text-dark d-flex align-items-center justify-content-center" style="width: 24px; height: 30px; padding: 0; opacity: 0.7;" onclick="this.previousElementSibling.value++;"><i class="fas fa-plus" style="font-size: 10px;"></i></button>
+                                </div>
+                                <button type="submit" class="btn-cart shadow-sm d-flex align-items-center justify-content-center border-0 p-0 flex-shrink-0" style="width: 38px; height: 38px; border-radius: 50%;">
+                                    <i class="fas fa-shopping-basket"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
 

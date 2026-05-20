@@ -41,7 +41,17 @@
                                         </div>
                                     </td>
                                     <td><span class="text-muted"><?php echo number_format($item['price'], 0, ',', '.'); ?>đ</span></td>
-                                    <td class="fw-bold text-center"><?php echo $item['quantity']; ?></td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <a href="/Product/updateCart/<?php echo $id; ?>/decrease" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                                <i class="fas fa-minus" style="font-size: 10px;"></i>
+                                            </a>
+                                            <span class="fw-bold mx-2"><?php echo $item['quantity']; ?></span>
+                                            <a href="/Product/updateCart/<?php echo $id; ?>/increase" class="btn btn-sm btn-outline-success rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                                <i class="fas fa-plus" style="font-size: 10px;"></i>
+                                            </a>
+                                        </div>
+                                    </td>
                                     <td><span class="text-success fw-bold"><?php echo number_format($subtotal, 0, ',', '.'); ?>đ</span></td>
                                     <td class="text-center">
                                         <a href="/Product/removeFromCart/<?php echo $id; ?>" class="btn btn-sm btn-outline-danger border-0 rounded-circle">

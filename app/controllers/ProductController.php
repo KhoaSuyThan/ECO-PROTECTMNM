@@ -144,6 +144,12 @@ class ProductController {
             die("Không tìm thấy sản phẩm.");
         }
 
+        $quantity = 1;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quantity'])) {
+            $quantity = (int)$_POST['quantity'];
+            if ($quantity < 1) $quantity = 1;
+        }
+
         // Khởi tạo giỏ hàng nếu chưa có
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
@@ -151,18 +157,19 @@ class ProductController {
 
         // Nếu sản phẩm đã có trong giỏ, tăng số lượng
         if (isset($_SESSION['cart'][$id])) {
-            $_SESSION['cart'][$id]['quantity']++;
+            $_SESSION['cart'][$id]['quantity'] += $quantity;
         } else {
             // Nếu chưa có, thêm mới vào giỏ
             $_SESSION['cart'][$id] = [
                 'name' => $product->name,
                 'price' => $product->price,
-                'quantity' => 1,
+                'quantity' => $quantity,
                 'image' => $product->image
             ];
         }
-        // Quay về trang hiển thị giỏ hàng
-        header('Location: /Product/cart');
+        // Quay về trang cũ (Product/list hoặc Product/cart)
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/Product/cart';
+        header("Location: $referer");
         exit();
     }
 
@@ -177,6 +184,24 @@ class ProductController {
             unset($_SESSION['cart'][$id]);
         }
         header('Location: /Product/cart');
+        exit();
+    }
+
+    // Tính năng bổ sung: Cập nhật số lượng sản phẩm trong giỏ hàng
+    public function updateCart($id, $action) {
+        if (isset($_SESSION['cart'][$id])) {
+            if ($action === 'increase') {
+                $_SESSION['cart'][$id]['quantity']++;
+            } elseif ($action === 'decrease') {
+                $_SESSION['cart'][$id]['quantity']--;
+                // Nếu số lượng giảm về 0 hoặc nhỏ hơn, xóa khỏi giỏ
+                if ($_SESSION['cart'][$id]['quantity'] <= 0) {
+                    unset($_SESSION['cart'][$id]);
+                }
+            }
+        }
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/Product/cart';
+        header("Location: $referer");
         exit();
     }
 
