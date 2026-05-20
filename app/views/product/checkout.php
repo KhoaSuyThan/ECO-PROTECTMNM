@@ -1,4 +1,4 @@
-<?php include 'app/views/shares/header.php'; ?>
+<?php include 'app/shares/header.php'; ?>
 
 <div class="container py-5">
     <div class="row justify-content-center">
