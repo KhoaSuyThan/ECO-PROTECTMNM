@@ -7,8 +7,15 @@ class CategoryController {
     private $db;
 
     public function __construct() {
+        $this->requireAdmin();
         $this->db = (new Database())->getConnection();
         $this->categoryModel = new CategoryModel($this->db);
+    }
+
+    private function requireAdmin() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+            die('Bạn không có quyền truy cập trang này. <a href="/Product/list">Quay lại</a>');
+        }
     }
 
     public function index() { $this->list(); }

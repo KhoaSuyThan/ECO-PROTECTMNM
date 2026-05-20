@@ -49,11 +49,13 @@
                     </a>
                 </li>
                 
+                <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link px-3" href="/Category/list">
                         <i class="fas fa-tags me-2 text-warning"></i>Danh mục
                     </a>
                 </li>
+                <?php endif; ?>
                 
                 <li class="nav-item">
                     <?php 
@@ -75,10 +77,28 @@
                     </a>
                 </li>
 
-                <li class="nav-item ms-lg-3">
+                <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
+                <li class="nav-item ms-lg-2">
                     <a class="btn btn-add-quick rounded-pill px-4 shadow-sm" href="/Product/add">
                         <i class="fas fa-plus-circle me-1"></i> Thêm sản phẩm
                     </a>
+                </li>
+                <?php endif; ?>
+
+                <li class="nav-item ms-lg-2 border-start ps-lg-3">
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <div class="dropdown">
+                            <button class="btn btn-light rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle text-success me-1"></i> 
+                                <strong><?php echo htmlspecialchars($_SESSION['user']['username']); ?></strong>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm mt-2 rounded-3">
+                                <li><a class="dropdown-item text-danger" href="/User/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <a href="/User/login" class="btn btn-outline-success rounded-pill px-4">Đăng nhập</a>
+                    <?php endif; ?>
                 </li>
             </ul>
         </div>

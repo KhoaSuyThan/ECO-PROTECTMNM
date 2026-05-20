@@ -15,6 +15,12 @@ class ProductController {
         $this->categoryModel = new CategoryModel($this->db);
     }
 
+    private function requireAdmin() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+            die('Bạn không có quyền truy cập trang này. <a href="/Product/list">Quay lại</a>');
+        }
+    }
+
     public function index() {
         $this->list();
     }
@@ -26,12 +32,14 @@ class ProductController {
     }
 
     public function add() {
+        $this->requireAdmin();
         $categoryModel = new CategoryModel($this->db);
         $categories = $categoryModel->getCategories();
         include 'app/views/product/add.php';
     }
 
     public function save() {
+        $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
@@ -63,6 +71,7 @@ class ProductController {
     }
 
     public function edit($id = null) {
+        $this->requireAdmin();
         // Sửa lỗi Fatal Error bằng cách kiểm tra ID
         if (!$id) {
             header('Location: /Product/list');
@@ -81,6 +90,7 @@ class ProductController {
 
 
     public function update() {
+        $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
             $name = $_POST['name'];
@@ -104,6 +114,7 @@ class ProductController {
     }
 
     public function delete($id) {
+        $this->requireAdmin();
         if ($this->productModel->deleteProduct($id)) {
             header('Location: /Product/list');
             exit();

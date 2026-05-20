@@ -197,12 +197,15 @@
                             <a href="/Product/show/<?php echo $product->id; ?>" class="btn-view-detail flex-grow-1 text-center text-decoration-none shadow-sm">
                                 <i class="fas fa-eye me-1"></i> Chi tiết
                             </a>
+                            <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                             <a href="/Product/edit/<?php echo $product->id; ?>" class="btn-edit-outline text-decoration-none">
                                 <i class="fas fa-pen"></i>
                             </a>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Delete Option -->
+                        <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                         <div class="text-center border-top pt-3">
                             <a href="/Product/delete/<?php echo $product->id; ?>" 
                                class="delete-link text-decoration-none" 
@@ -210,6 +213,7 @@
                                 <i class="fas fa-trash-alt me-1"></i> Xóa sản phẩm
                             </a>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
