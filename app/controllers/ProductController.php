@@ -28,6 +28,7 @@ class ProductController {
     public function list() {
         // Lấy danh sách từ Database thay vì Session
         $products = $this->productModel->getProducts();
+        $categories = $this->categoryModel->getCategories();
         include 'app/views/product/list.php';
     }
 
