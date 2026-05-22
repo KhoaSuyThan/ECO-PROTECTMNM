@@ -1,4 +1,7 @@
-<?php include 'app/shares/header.php'; ?>
+<?php 
+/** @var stdClass $product */
+include 'app/shares/header.php'; 
+?>
 
 <style>
     :root {
@@ -232,7 +235,7 @@
                     <div class="mb-4">
                         <h6 class="fw-bold text-dark mb-2"><i class="fas fa-leaf me-2 text-success"></i>Đặc điểm nổi bật:</h6>
                         <p class="description-text mb-0">
-                            <?php echo nl2br(htmlspecialchars($product->description)); ?>
+                            <?php echo nl2br(htmlspecialchars($product->description ?? '')); ?>
                         </p>
                     </div>
                 </div>

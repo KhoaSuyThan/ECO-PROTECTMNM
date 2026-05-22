@@ -156,14 +156,13 @@
         display: flex;
         gap: 8px;
         z-index: 3;
-        opacity: 0;
-        transform: translateY(-5px);
+        opacity: 1;
+        transform: translateY(0);
         transition: all 0.3s ease;
     }
 
     .product-card:hover .admin-actions-floating {
-        opacity: 1;
-        transform: translateY(0);
+        /* Kept for structural consistency, no further opacity change needed */
     }
 
     .btn-admin-floating {

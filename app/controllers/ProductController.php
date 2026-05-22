@@ -50,10 +50,20 @@ class ProductController {
             // Xử lý ảnh nếu có
             $image = "";
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-                $target_dir = "uploads/";
-                if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-                $image = $target_dir . time() . "_" . basename($_FILES["image"]["name"]);
-                move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+                $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+                $file_ext = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
+                
+                if (in_array($file_ext, $allowed_exts)) {
+                    $target_dir = "uploads/";
+                    if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+                    $image = $target_dir . time() . "_" . basename($_FILES["image"]["name"]);
+                    move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+                } else {
+                    $errors = "Định dạng ảnh không hợp lệ (Chỉ nhận .jpg, .png, .jpeg, .webp, .gif)";
+                    $categories = (new CategoryModel($this->db))->getCategories();
+                    include 'app/views/product/add.php';
+                    return;
+                }
             }
 
             // Gọi Model để lưu vào Database
@@ -124,6 +134,13 @@ class ProductController {
 
     // Hàm hỗ trợ upload hình ảnh
     private function uploadImage($file) {
+        $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $file_ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+        
+        if (!in_array($file_ext, $allowed_exts)) {
+            return ""; // Chặn không cho upload nếu sai định dạng
+        }
+
         $target_dir = "uploads/";
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
