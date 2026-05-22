@@ -33,6 +33,37 @@
     </style>
 </head>
 <body>
+
+<!-- Flash Message Toast -->
+<?php if (isset($_SESSION['success'])): ?>
+<div class="position-fixed p-3" style="z-index: 9999; top: 90px; right: 20px;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0 show shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold px-3 py-2">
+                <i class="fas fa-check-circle me-2 fs-5 align-middle"></i>
+                <span class="align-middle">
+                    <?php 
+                        echo htmlspecialchars($_SESSION['success']); 
+                        unset($_SESSION['success']); 
+                    ?>
+                </span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close" onclick="this.closest('.toast').remove()"></button>
+        </div>
+    </div>
+</div>
+<script>
+    setTimeout(function() {
+        var toastEl = document.getElementById('successToast');
+        if (toastEl) {
+            toastEl.style.transition = 'all 0.5s ease-out';
+            toastEl.style.opacity = '0';
+            toastEl.style.transform = 'translateY(-10px)';
+            setTimeout(() => toastEl.remove(), 500);
+        }
+    }, 3000);
+</script>
+<?php endif; ?>
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4 py-3">
     <div class="container">
         <a class="navbar-brand fs-4" href="/Product/list">🌿 ECO-PROTECT</a>

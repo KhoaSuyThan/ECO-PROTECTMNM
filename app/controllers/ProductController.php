@@ -127,6 +127,7 @@ class ProductController {
     public function delete($id) {
         $this->requireAdmin();
         if ($this->productModel->deleteProduct($id)) {
+            $_SESSION['success'] = "Đã xóa sản phẩm thành công!";
             header('Location: /Product/list');
             exit();
         }
@@ -196,6 +197,9 @@ class ProductController {
                 'image' => $product->image
             ];
         }
+        
+        $_SESSION['success'] = "Đã thêm " . $product->name . " vào giỏ hàng!";
+        
         // Quay về trang cũ (Product/list hoặc Product/cart)
         $referer = $_SERVER['HTTP_REFERER'] ?? '/Product/cart';
         header("Location: $referer");
