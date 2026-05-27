@@ -161,10 +161,6 @@
         transition: all 0.3s ease;
     }
 
-    .product-card:hover .admin-actions-floating {
-        /* Kept for structural consistency, no further opacity change needed */
-    }
-
     .btn-admin-floating {
         width: 32px;
         height: 32px;
@@ -197,7 +193,7 @@
         font-size: 1.1rem;
         font-weight: 700;
         color: #2d3748;
-        margin-bottom: 12px;
+        margin-bottom: 8px; /* Giảm margin một chút để chứa phần sao đánh giá đẹp hơn */
         line-height: 1.4;
         height: 3rem;
         display: -webkit-box;
@@ -299,25 +295,32 @@
 </style>
 
 <div class="container mt-4">
-    <!-- Hero Section -->
-    <div class="hero-section shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <div class="text-center text-md-start">
-            <h1 class="display-5 fw-bold mb-2">Sản Phẩm Xanh</h1>
-            <p class="lead opacity-90 mb-0">Cùng chúng tôi bảo vệ môi trường bằng những lựa chọn bền vững.</p>
+    <div class="hero-section shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start mb-4 mb-md-0 pe-md-5">
+                <h1 class="display-5 fw-bold mb-3">Sản Phẩm Xanh</h1>
+                <p class="lead mb-0" style="opacity: 0.85; font-size: 1.15rem; line-height: 1.6;">
+                    Cùng chúng tôi bảo vệ môi trường bằng những lựa chọn bền vững.
+                </p>
+            </div>
+            
+            <div class="col-md-6 text-center text-md-end">
+                <img src="../../banner/image.png" 
+                     alt="Eco Banner" 
+                     class="img-fluid shadow-lg" 
+                     style="border-radius: 20px; max-height: 320px; width: 100%; object-fit: cover; border: 4px solid rgba(255, 255, 255, 0.15);">
+            </div>
         </div>
     </div>
 
-    <!-- Search & Filter Container -->
     <div class="search-filter-container">
         <div class="row g-3 align-items-center">
-            <!-- Search -->
             <div class="col-md-4">
                 <div class="search-input-group">
                     <i class="fas fa-search"></i>
                     <input type="text" id="search-input" class="form-control search-control" placeholder="Tìm kiếm sản phẩm theo tên...">
                 </div>
             </div>
-            <!-- Category Filter Tabs -->
             <div class="col-md-8">
                 <div class="d-flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: none;">
                     <button class="btn filter-btn active" data-category="all">Tất cả sản phẩm</button>
@@ -333,7 +336,6 @@
         </div>
     </div>
 
-    <!-- Product Grid -->
     <div class="row g-4 mb-5" id="product-grid">
         <?php if (empty($products)): ?>
             <div class="col-12 text-center py-5">
@@ -347,14 +349,11 @@
                  data-category="<?php echo $product->category_id; ?>">
                 
                 <div class="card product-card">
-                    <!-- Image Area -->
                     <div class="card-img-container">
-                        <!-- Category Badge -->
                         <span class="eco-badge">
                             <i class="fas fa-tag me-1"></i><?php echo htmlspecialchars($product->category_name ?? 'Eco'); ?>
                         </span>
 
-                        <!-- Floating Admin Actions -->
                         <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                             <div class="admin-actions-floating">
                                 <a href="/Product/edit/<?php echo $product->id; ?>" class="btn-admin-floating edit" title="Sửa sản phẩm">
@@ -378,20 +377,30 @@
                         <?php endif; ?>
                     </div>
 
-                    <!-- Card Body -->
                     <div class="card-body p-4 d-flex flex-column justify-content-between flex-grow-1">
                         <div>
                             <h5 class="product-title" title="<?php echo htmlspecialchars($product->name); ?>">
                                 <?php echo htmlspecialchars($product->name); ?>
                             </h5>
                             
-                            <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="text-warning" style="font-size: 0.85rem;">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="ms-2" style="font-size: 0.8rem; color: #718096;">
+                                    4.7/5 (76 đánh giá)
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
                                 <div>
                                     <div class="price-label">Giá đóng góp</div>
                                     <div class="price-value text-nowrap"><?php echo number_format((float)$product->price, 0, ',', '.'); ?> <small>đ</small></div>
                                 </div>
                                 
-                                <!-- Form Add to Cart -->
                                 <form action="/Product/addToCart/<?php echo $product->id; ?>" method="POST" class="d-flex align-items-center m-0 gap-1">
                                     <div class="d-flex align-items-center qty-input-container">
                                         <button type="button" class="qty-btn" onclick="let input = this.nextElementSibling; if(input.value > 1) input.value--;"><i class="fas fa-minus" style="font-size: 8px;"></i></button>
@@ -405,7 +414,6 @@
                             </div>
                         </div>
 
-                        <!-- View Detail Button -->
                         <a href="/Product/show/<?php echo $product->id; ?>" class="btn-view-detail-card">
                             <i class="fas fa-eye me-1"></i> Xem chi tiết
                         </a>

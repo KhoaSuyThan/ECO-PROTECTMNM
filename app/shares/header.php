@@ -90,12 +90,10 @@
                 
                 <li class="nav-item">
                     <?php 
-                        // Tính tổng số lượng sản phẩm đang có trong giỏ hàng session
+                        // Tính số loại sản phẩm khác nhau đang có trong giỏ hàng session
                         $total_items = 0;
                         if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-                            foreach ($_SESSION['cart'] as $item) {
-                                $total_items += $item['quantity'];
-                            }
+                            $total_items = count($_SESSION['cart']);
                         }
                     ?>
                     <a class="nav-link px-3 position-relative" href="/Product/cart" title="Xem giỏ hàng">

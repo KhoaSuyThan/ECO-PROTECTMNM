@@ -11,7 +11,7 @@
                 <p class="text-muted mb-4 fs-5">Cảm ơn bạn đã đồng hành cùng cửa hàng xanh. Đơn hàng của bạn đã được tiếp nhận và xử lý trên hệ thống.</p>
                 <div>
                     <a href="/Product/list" class="btn btn-success btn-lg rounded-pill px-5 fw-bold shadow-sm">
-                         tiếp tục mua sắm
+                         Tiếp tục mua sắm
                     </a>
                 </div>
             </div>
