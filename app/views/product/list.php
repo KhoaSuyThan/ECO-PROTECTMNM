@@ -318,7 +318,55 @@
         background-color: #f7fafc;
         border-color: #e2e8f0;
     }
+    /* --- Đồ họa trang trí Background 2 bên --- */
+    .bg-decor {
+        position: fixed;
+        z-index: -1; 
+        color: var(--eco-dark); /* Đổi sang màu xanh lá đậm nhất */
+        opacity: 0.12; /* Tăng độ rõ nét lên (thay vì 0.05 như cũ) */
+        pointer-events: none; 
+    }
+    
+    .bg-decor-1 {
+        top: 15%;
+        left: 2%;
+        font-size: 18vw;
+        transform: rotate(-25deg);
+    }
+    
+    .bg-decor-2 {
+        bottom: 5%;
+        left: 5%;
+        font-size: 12vw;
+        transform: rotate(15deg);
+    }
+    
+    .bg-decor-3 {
+        top: 10%;
+        right: 1%;
+        font-size: 20vw;
+        transform: rotate(30deg);
+    }
+    
+    .bg-decor-4 {
+        bottom: 10%;
+        right: 4%;
+        font-size: 14vw;
+        transform: rotate(-15deg);
+    }
+
+    /* Ẩn họa tiết trên điện thoại/tablet để không làm chật màn hình */
+    @media (max-width: 1400px) {
+        .bg-decor {
+            display: none;
+        }
+    }
 </style>
+
+<div class="bg-decor bg-decor-1"><i class="fas fa-leaf"></i></div>
+<div class="bg-decor bg-decor-2"><i class="fab fa-pagelines"></i></div>
+<div class="bg-decor bg-decor-3"><i class="fas fa-seedling"></i></div>
+<div class="bg-decor bg-decor-4"><i class="fas fa-leaf"></i></div>
 
 <div class="container mt-4">
     <div class="hero-section shadow-sm">
