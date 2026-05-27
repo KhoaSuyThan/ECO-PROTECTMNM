@@ -21,12 +21,16 @@ class ProductController {
         }
     }
 
+    // Hàm hỗ trợ lấy tên Session Giỏ hàng theo tài khoản người dùng
+    private function getCartKey() {
+        return isset($_SESSION['user']) ? 'cart_' . $_SESSION['user']['username'] : 'cart_guest';
+    }
+
     public function index() {
         $this->list();
     }
 
     public function list() {
-        // Lấy danh sách từ Database thay vì Session
         $products = $this->productModel->getProducts();
         $categories = $this->categoryModel->getCategories();
         include 'app/views/product/list.php';
@@ -47,7 +51,6 @@ class ProductController {
             $price = $_POST['price'] ?? 0;
             $category_id = $_POST['category_id'] ?? null;
 
-            // Xử lý ảnh nếu có
             $image = "";
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
                 $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
@@ -66,15 +69,13 @@ class ProductController {
                 }
             }
 
-            // Gọi Model để lưu vào Database
             $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image);
             
             if ($result === true) {
-                // Lưu thành công, quay về danh sách (chú ý đường dẫn dự án của bạn)
                 header('Location: /Product/list');
                 exit();
             } else {
-                $errors = $result; // Nếu Model trả về mảng lỗi validation
+                $errors = $result;
                 $categories = (new CategoryModel($this->db))->getCategories();
                 include 'app/views/product/add.php';
             }
@@ -83,7 +84,6 @@ class ProductController {
 
     public function edit($id = null) {
         $this->requireAdmin();
-        // Sửa lỗi Fatal Error bằng cách kiểm tra ID
         if (!$id) {
             header('Location: /Product/list');
             exit();
@@ -99,7 +99,6 @@ class ProductController {
         }
     }
 
-
     public function update() {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,11 +108,9 @@ class ProductController {
             $price = $_POST['price'];
             $category_id = $_POST['category_id'];
 
-            // Xử lý ảnh
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
                 $image = $this->uploadImage($_FILES['image']);
             } else {
-                // Nếu không chọn ảnh mới, lấy lại đường dẫn ảnh cũ từ input hidden
                 $image = $_POST['existing_image'] ?? "";
             }
 
@@ -133,13 +130,12 @@ class ProductController {
         }
     }
 
-    // Hàm hỗ trợ upload hình ảnh
     private function uploadImage($file) {
         $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
         $file_ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
         
         if (!in_array($file_ext, $allowed_exts)) {
-            return ""; // Chặn không cho upload nếu sai định dạng
+            return "";
         }
 
         $target_dir = "uploads/";
@@ -155,8 +151,6 @@ class ProductController {
         return "";
     }
 
-    // File: app/controllers/ProductController.php
-
     public function show($id) {
         $product = $this->productModel->getProductById($id);
         if ($product) {
@@ -166,8 +160,7 @@ class ProductController {
         }
     }
 
-    // Thêm các phương thức này vào bên trong class ProductController trong file app/controllers/ProductController.php
-
+    // --- CÁC HÀM XỬ LÝ GIỎ HÀNG ĐÃ ĐƯỢC CẬP NHẬT ---
     public function addToCart($id) {
         $product = $this->productModel->getProductById($id);
         if (!$product) {
@@ -180,17 +173,16 @@ class ProductController {
             if ($quantity < 1) $quantity = 1;
         }
 
-        // Khởi tạo giỏ hàng nếu chưa có
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
+        $cartKey = $this->getCartKey(); // Lấy đúng giỏ hàng của user
+
+        if (!isset($_SESSION[$cartKey])) {
+            $_SESSION[$cartKey] = [];
         }
 
-        // Nếu sản phẩm đã có trong giỏ, tăng số lượng
-        if (isset($_SESSION['cart'][$id])) {
-            $_SESSION['cart'][$id]['quantity'] += $quantity;
+        if (isset($_SESSION[$cartKey][$id])) {
+            $_SESSION[$cartKey][$id]['quantity'] += $quantity;
         } else {
-            // Nếu chưa có, thêm mới vào giỏ
-            $_SESSION['cart'][$id] = [
+            $_SESSION[$cartKey][$id] = [
                 'name' => $product->name,
                 'price' => $product->price,
                 'quantity' => $quantity,
@@ -200,36 +192,35 @@ class ProductController {
         
         $_SESSION['success'] = "Đã thêm " . $product->name . " vào giỏ hàng!";
         
-        // Quay về trang cũ (Product/list hoặc Product/cart)
         $referer = $_SERVER['HTTP_REFERER'] ?? '/Product/cart';
         header("Location: $referer");
         exit();
     }
 
     public function cart() {
-        $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+        $cartKey = $this->getCartKey();
+        $cart = isset($_SESSION[$cartKey]) ? $_SESSION[$cartKey] : [];
         include 'app/views/product/cart.php';
     }
 
-    // Tính năng bổ sung: Xóa sản phẩm khỏi giỏ hàng
     public function removeFromCart($id) {
-        if (isset($_SESSION['cart'][$id])) {
-            unset($_SESSION['cart'][$id]);
+        $cartKey = $this->getCartKey();
+        if (isset($_SESSION[$cartKey][$id])) {
+            unset($_SESSION[$cartKey][$id]);
         }
         header('Location: /Product/cart');
         exit();
     }
 
-    // Tính năng bổ sung: Cập nhật số lượng sản phẩm trong giỏ hàng
     public function updateCart($id, $action) {
-        if (isset($_SESSION['cart'][$id])) {
+        $cartKey = $this->getCartKey();
+        if (isset($_SESSION[$cartKey][$id])) {
             if ($action === 'increase') {
-                $_SESSION['cart'][$id]['quantity']++;
+                $_SESSION[$cartKey][$id]['quantity']++;
             } elseif ($action === 'decrease') {
-                $_SESSION['cart'][$id]['quantity']--;
-                // Nếu số lượng giảm về 0 hoặc nhỏ hơn, xóa khỏi giỏ
-                if ($_SESSION['cart'][$id]['quantity'] <= 0) {
-                    unset($_SESSION['cart'][$id]);
+                $_SESSION[$cartKey][$id]['quantity']--;
+                if ($_SESSION[$cartKey][$id]['quantity'] <= 0) {
+                    unset($_SESSION[$cartKey][$id]);
                 }
             }
         }
@@ -239,8 +230,8 @@ class ProductController {
     }
 
     public function checkout() {
-        // Nếu giỏ hàng trống thì không cho vào trang thanh toán
-        if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+        $cartKey = $this->getCartKey();
+        if (!isset($_SESSION[$cartKey]) || empty($_SESSION[$cartKey])) {
             header('Location: /Product/list');
             exit();
         }
@@ -253,14 +244,14 @@ class ProductController {
             $phone = $_POST['phone'] ?? '';
             $address = $_POST['address'] ?? '';
 
-            if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+            $cartKey = $this->getCartKey();
+
+            if (!isset($_SESSION[$cartKey]) || empty($_SESSION[$cartKey])) {
                 die("Giỏ hàng của bạn đang trống.");
             }
 
-            // Sử dụng Transaction để đảm bảo an toàn dữ liệu
             $this->db->beginTransaction();
             try {
-                // 1. Lưu vào bảng orders
                 $query = "INSERT INTO orders (name, phone, address) VALUES (:name, :phone, :address)";
                 $stmt = $this->db->prepare($query);
                 $stmt->execute([
@@ -270,8 +261,7 @@ class ProductController {
                 ]);
                 $order_id = $this->db->lastInsertId();
 
-                // 2. Lưu vào bảng order_details
-                $cart = $_SESSION['cart'];
+                $cart = $_SESSION[$cartKey];
                 foreach ($cart as $product_id => $item) {
                     $query = "INSERT INTO order_details (order_id, product_id, quantity, price) 
                             VALUES (:order_id, :product_id, :quantity, :price)";
@@ -284,18 +274,15 @@ class ProductController {
                     ]);
                 }
 
-                // Xóa giỏ hàng sau khi đặt thành công
-                unset($_SESSION['cart']);
+                // Xóa giỏ hàng CỦA USER ĐÓ sau khi đặt thành công
+                unset($_SESSION[$cartKey]);
                 
-                // Xác nhận hoàn tất transaction
                 $this->db->commit();
 
-                // Chuyển hướng sang trang cảm ơn
                 header('Location: /Product/orderConfirmation');
                 exit();
 
             } catch (Exception $e) {
-                // Có lỗi xảy ra, hoàn tác lại toàn bộ để tránh rác DB
                 $this->db->rollBack();
                 die("Đã xảy ra lỗi khi xử lý đơn hàng: " . $e->getMessage());
             }

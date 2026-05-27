@@ -91,9 +91,11 @@
                 <li class="nav-item">
                     <?php 
                         // Tính số loại sản phẩm khác nhau đang có trong giỏ hàng session
+                        $cartKey = isset($_SESSION['user']) ? 'cart_' . $_SESSION['user']['username'] : 'cart_guest';
+    
                         $total_items = 0;
-                        if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-                            $total_items = count($_SESSION['cart']);
+                        if (isset($_SESSION[$cartKey]) && !empty($_SESSION[$cartKey])) {
+                            $total_items = count($_SESSION[$cartKey]);
                         }
                     ?>
                     <a class="nav-link px-3 position-relative" href="/Product/cart" title="Xem giỏ hàng">
