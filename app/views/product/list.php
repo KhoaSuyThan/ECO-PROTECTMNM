@@ -428,19 +428,7 @@
                             <i class="fas fa-tag me-1"></i><?php echo htmlspecialchars($product->category_name ?? 'Eco'); ?>
                         </span>
 
-                        <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
-                            <div class="admin-actions-floating">
-                                <a href="/Product/edit/<?php echo $product->id; ?>" class="btn-admin-floating edit" title="Sửa sản phẩm">
-                                    <i class="fas fa-pen"></i>
-                                </a>
-                                <a href="/Product/delete/<?php echo $product->id; ?>" 
-                                   class="btn-admin-floating delete" 
-                                   title="Xóa sản phẩm"
-                                   onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
-                            </div>
-                        <?php endif; ?>
+
 
                         <?php if (!empty($product->image)): ?>
                             <img src="/<?php echo $product->image; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product->name); ?>">

@@ -21,7 +21,19 @@ class CategoryController {
     public function index() { $this->list(); }
 
     public function list() {
-        $categories = $this->categoryModel->getCategories();
+        $allCategories = $this->categoryModel->getCategories();
+        
+        $items_per_page = 8;
+        $total_items = count($allCategories);
+        $total_pages = ceil($total_items / $items_per_page);
+        
+        $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($current_page < 1) $current_page = 1;
+        if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pages;
+        
+        $offset = ($current_page - 1) * $items_per_page;
+        $categories = array_slice($allCategories, $offset, $items_per_page);
+        
         include 'app/views/category/list.php';
     }
 

@@ -162,6 +162,12 @@ class ProductController {
 
     // --- CÁC HÀM XỬ LÝ GIỎ HÀNG ĐÃ ĐƯỢC CẬP NHẬT ---
     public function addToCart($id) {
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.";
+            header('Location: /User/login');
+            exit();
+        }
+
         $product = $this->productModel->getProductById($id);
         if (!$product) {
             die("Không tìm thấy sản phẩm.");
@@ -198,6 +204,11 @@ class ProductController {
     }
 
     public function cart() {
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = "Bạn cần đăng nhập để xem giỏ hàng.";
+            header('Location: /User/login');
+            exit();
+        }
         $cartKey = $this->getCartKey();
         $cart = isset($_SESSION[$cartKey]) ? $_SESSION[$cartKey] : [];
         include 'app/views/product/cart.php';

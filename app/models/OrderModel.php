@@ -45,5 +45,42 @@ class OrderModel {
             'details' => $details
         ];
     }
+
+    public function getAllOrders() {
+        $query = "SELECT o.*, 
+                    (SELECT SUM(od.quantity * od.price) FROM order_details od WHERE od.order_id = o.id) as total_price
+                  FROM orders o 
+                  ORDER BY o.created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getOrderDetailsForAdmin($order_id) {
+        $queryOrder = "SELECT * FROM orders WHERE id = :order_id";
+        $stmtOrder = $this->conn->prepare($queryOrder);
+        $stmtOrder->bindParam(':order_id', $order_id);
+        $stmtOrder->execute();
+        
+        $orderInfo = $stmtOrder->fetch(PDO::FETCH_OBJ);
+        
+        if (!$orderInfo) return null;
+
+        $queryDetails = "SELECT od.*, p.name as product_name, p.image as product_image 
+                         FROM order_details od
+                         LEFT JOIN product p ON od.product_id = p.id
+                         WHERE od.order_id = :order_id";
+        $stmtDetails = $this->conn->prepare($queryDetails);
+        $stmtDetails->bindParam(':order_id', $order_id);
+        $stmtDetails->execute();
+        
+        $details = $stmtDetails->fetchAll(PDO::FETCH_OBJ);
+
+        return [
+            'info' => $orderInfo,
+            'details' => $details
+        ];
+    }
 }
 ?>

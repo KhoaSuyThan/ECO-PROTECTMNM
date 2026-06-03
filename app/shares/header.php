@@ -76,15 +76,30 @@
         <div class="collapse navbar-collapse" id="navbarNavNav">
             <ul class="navbar-nav ms-auto align-items-center gap-2 mt-3 mt-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link px-3" href="/Product/list">
-                        <i class="fas fa-box-open me-2 text-success"></i>Sản phẩm
+                    <a class="nav-link px-3 text-nowrap" href="/Product/list">
+                        <i class="fas fa-box-open me-2 text-success"></i>Cửa hàng
                     </a>
                 </li>
                 
                 <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                 <li class="nav-item">
-                    <a class="nav-link px-3" href="/Category/list">
+                    <a class="nav-link px-3 text-nowrap" href="/AdminProduct/index">
+                        <i class="fas fa-boxes me-2" style="color: #20c997;"></i>Sản phẩm
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 text-nowrap" href="/Category/list">
                         <i class="fas fa-tags me-2 text-warning"></i>Danh mục
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 text-nowrap" href="/AdminUser/index">
+                        <i class="fas fa-users-cog me-2 text-primary"></i>Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 text-nowrap" href="/AdminOrder/index">
+                        <i class="fas fa-file-invoice-dollar me-2 text-info"></i>Đơn hàng
                     </a>
                 </li>
                 <?php endif; ?>
@@ -99,7 +114,7 @@
                             $total_items = count($_SESSION[$cartKey]);
                         }
                     ?>
-                    <a class="nav-link px-3 position-relative" href="/Product/cart" title="Xem giỏ hàng">
+                    <a class="nav-link px-3 position-relative text-nowrap" href="/Product/cart" title="Xem giỏ hàng">
                         <i class="fas fa-shopping-cart me-2 text-info fs-5"></i>Giỏ hàng
                         <?php if ($total_items > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
@@ -109,22 +124,19 @@
                     </a>
                 </li>
 
-                <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
-                <li class="nav-item ms-lg-2">
-                    <a class="btn btn-add-quick rounded-pill px-4 shadow-sm" href="/Product/add">
-                        <i class="fas fa-plus-circle me-1"></i> Thêm sản phẩm
-                    </a>
-                </li>
-                <?php endif; ?>
-
                 <li class="nav-item ms-lg-2 border-start ps-lg-3">
                     <?php if (isset($_SESSION['user'])): ?>
                         <div class="dropdown">
-                            <button class="btn btn-light rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle text-success me-1"></i> 
+                            <button class="btn btn-light rounded-pill dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?php if (!empty($_SESSION['user']['avatar'])): ?>
+                                    <img src="/<?php echo htmlspecialchars($_SESSION['user']['avatar']); ?>" alt="Avatar" class="rounded-circle me-2" style="width: 25px; height: 25px; object-fit: cover;">
+                                <?php else: ?>
+                                    <i class="fas fa-user-circle text-success me-2 fs-5"></i>
+                                <?php endif; ?>
                                 <strong><?php echo htmlspecialchars($_SESSION['user']['username']); ?></strong>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm mt-2 rounded-3">
+                                <li><a class="dropdown-item" href="/User/profile"><i class="fas fa-user-edit me-2 text-primary"></i>Hồ sơ cá nhân</a></li>
                                 <li><a class="dropdown-item" href="/Order/history"><i class="fas fa-history me-2 text-success"></i>Lịch sử mua hàng</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/User/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>

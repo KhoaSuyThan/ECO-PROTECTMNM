@@ -17,8 +17,17 @@
                             <input type="text" name="username" class="form-control form-control-lg bg-light border-0" required>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Email</label>
+                            <input type="email" name="email" class="form-control form-control-lg bg-light border-0" required>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label text-muted fw-bold">Mật khẩu</label>
-                            <input type="password" name="password" class="form-control form-control-lg bg-light border-0" required>
+                            <div class="input-group">
+                                <input type="password" id="password" name="password" class="form-control form-control-lg bg-light border-0" required>
+                                <button class="btn btn-light bg-light border-0 text-muted" type="button" id="togglePassword">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-4">
                             <label class="form-label text-muted fw-bold">Xác nhận mật khẩu</label>
@@ -36,5 +45,21 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('password');
+    const icon = document.getElementById('toggleIcon');
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+</script>
 
 <?php include 'app/shares/footer.php'; ?>

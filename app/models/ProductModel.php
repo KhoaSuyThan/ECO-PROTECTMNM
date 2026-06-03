@@ -9,7 +9,7 @@ class ProductModel
     }
     public function getProducts()
     {
-        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name
+        $query = "SELECT p.*, c.name as category_name
         FROM " . $this->table_name . " p
         LEFT JOIN category c ON p.category_id = c.id";
 
