@@ -250,11 +250,15 @@ class ProductController {
                 die("Giỏ hàng của bạn đang trống.");
             }
 
+            // Lấy user_id nếu đã đăng nhập (Chức năng Lịch sử mua hàng)
+            $user_id = isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : null;
+
             $this->db->beginTransaction();
             try {
-                $query = "INSERT INTO orders (name, phone, address) VALUES (:name, :phone, :address)";
+                $query = "INSERT INTO orders (user_id, name, phone, address) VALUES (:user_id, :name, :phone, :address)";
                 $stmt = $this->db->prepare($query);
                 $stmt->execute([
+                    ':user_id' => $user_id,
                     ':name' => htmlspecialchars(strip_tags($name)),
                     ':phone' => htmlspecialchars(strip_tags($phone)),
                     ':address' => htmlspecialchars(strip_tags($address))

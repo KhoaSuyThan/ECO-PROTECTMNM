@@ -6,6 +6,7 @@
     <title>ECO-PROTECT STORE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
         body { background-color: #f8f9fa; }
         .navbar-brand { font-weight: 800; color: #2d6a4f !important; }
@@ -124,6 +125,8 @@
                                 <strong><?php echo htmlspecialchars($_SESSION['user']['username']); ?></strong>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm mt-2 rounded-3">
+                                <li><a class="dropdown-item" href="/Order/history"><i class="fas fa-history me-2 text-success"></i>Lịch sử mua hàng</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/User/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
                             </ul>
                         </div>

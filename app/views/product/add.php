@@ -126,24 +126,20 @@
                         <p class="text-muted small">Điền thông tin chi tiết để đưa sản phẩm xanh đến với mọi người</p>
                     </div>
 
-                    <form method="POST" action="/Product/save" enctype="multipart/form-data">
+                    <form id="add-product-form">
                         <div class="row">
                             <!-- Tên sản phẩm -->
                             <div class="col-12 mb-4">
                                 <label class="form-label"><i class="fas fa-tag"></i>Tên sản phẩm</label>
-                                <input type="text" name="name" class="form-control" placeholder="Ví dụ: Bình nước bã mía" required>
+                                <input type="text" id="name" name="name" class="form-control" placeholder="Ví dụ: Bình nước bã mía" required>
                             </div>
 
                             <!-- Danh mục -->
                             <div class="col-md-6 mb-4">
                                 <label class="form-label"><i class="fas fa-layer-group"></i>Danh mục</label>
-                                <select name="category_id" class="form-select" required>
-                                    <option value="" selected disabled>Chọn nhóm sản phẩm...</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?php echo $category->id; ?>">
-                                            <?php echo htmlspecialchars($category->name); ?>
-                                        </option>
-                                    <?php endforeach; ?>
+                                <select id="category_id" name="category_id" class="form-select" required>
+                                    <option value="" selected disabled>Đang tải danh mục...</option>
+                                    <!-- Options sẽ được load qua API -->
                                 </select>
                             </div>
 
@@ -152,28 +148,15 @@
                                 <label class="form-label"><i class="fas fa-coins"></i>Giá bán lẻ</label>
                                 <div class="input-group">
                                     <span class="input-group-text">₫</span>
-                                    <input type="number" name="price" class="form-control price-input" placeholder="0" required>
+                                    <input type="number" id="price" name="price" class="form-control price-input" placeholder="0" required>
                                 </div>
                             </div>
 
                             <!-- Mô tả -->
                             <div class="col-12 mb-4">
                                 <label class="form-label"><i class="fas fa-align-left"></i>Mô tả & Thành phần</label>
-                                <textarea name="description" class="form-control" rows="4" 
+                                <textarea id="description" name="description" class="form-control" rows="4" 
                                           placeholder="Chia sẻ về nguồn gốc, chất liệu sinh học và ưu điểm của sản phẩm..." required></textarea>
-                            </div>
-
-                            <!-- Upload Ảnh -->
-                            <div class="col-12 mb-5">
-                                <label class="form-label"><i class="fas fa-camera"></i>Hình ảnh sản phẩm</label>
-                                <div class="image-upload-wrapper" onclick="document.getElementById('fileInput').click();">
-                                    <div id="uploadPlaceholder">
-                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
-                                        <p class="mb-0 text-muted small">Nhấn để chọn ảnh hoặc kéo thả file vào đây</p>
-                                    </div>
-                                    <img id="imagePreview" src="" alt="Preview">
-                                    <input type="file" id="fileInput" name="image" class="d-none" accept="image/*" onchange="previewImage(event)">
-                                </div>
                             </div>
                         </div>
 
@@ -194,24 +177,68 @@
 </div>
 
 <script>
-    function previewImage(event) {
-        const reader = new FileReader();
-        const fileInput = event.target;
-        const preview = document.getElementById('imagePreview');
-        const placeholder = document.getElementById('uploadPlaceholder');
+$(document).ready(function() {
+    // Load categories via API
+    $.ajax({
+        url: '/api/category',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            const categorySelect = $('#category_id');
+            categorySelect.empty();
+            categorySelect.append('<option value="" selected disabled>Chọn nhóm sản phẩm...</option>');
+            data.forEach(category => {
+                categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+            });
+        },
+        error: function() {
+            alert('Lỗi tải danh mục!');
+        }
+    });
 
-        reader.onload = function() {
-            if (reader.readyState === 2) {
-                preview.src = reader.result;
-                preview.style.display = 'inline-block';
-                placeholder.style.display = 'none';
-            }
-        }
+    // Handle form submit
+    $('#add-product-form').on('submit', function(e) {
+        e.preventDefault();
         
-        if (fileInput.files[0]) {
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-    }
+        const jsonData = {
+            name: $('#name').val(),
+            description: $('#description').val(),
+            price: $('#price').val(),
+            category_id: $('#category_id').val()
+        };
+
+        $.ajax({
+            url: '/api/product',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(jsonData),
+            success: function(response) {
+                if (response.message === 'Product created successfully') {
+                    window.location.href = '/Product/list';
+                } else {
+                    alert('Thêm sản phẩm thất bại');
+                }
+            },
+            error: function(xhr) {
+                console.error("Error:", xhr.responseText);
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    if (res.errors) {
+                        let errorMsg = 'Lỗi validation:\n';
+                        for (const key in res.errors) {
+                            errorMsg += `- ${res.errors[key]}\n`;
+                        }
+                        alert(errorMsg);
+                    } else {
+                        alert('Lỗi thêm sản phẩm!');
+                    }
+                } catch(e) {
+                    alert('Lỗi thêm sản phẩm!');
+                }
+            }
+        });
+    });
+});
 </script>
 
 <?php include 'app/shares/footer.php'; ?>

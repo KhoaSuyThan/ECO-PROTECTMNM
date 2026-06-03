@@ -32,57 +32,30 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-                    <form method="POST" action="/Product/update" enctype="multipart/form-data">
+                    <form id="edit-product-form">
                         <!-- ID sản phẩm -->
-                        <input type="hidden" name="id" value="<?php echo $product->id; ?>">
-                        
-                        <!-- Đường dẫn ảnh cũ -->
-                        <input type="hidden" name="existing_image" value="<?php echo $product->image; ?>">
+                        <input type="hidden" id="id" name="id" value="<?php echo isset($product) ? $product->id : (isset($editId) ? $editId : 0); ?>">
                         
                         <div class="mb-3">
                             <label class="form-label"><i class="fas fa-tag me-2"></i>Tên sản phẩm xanh</label>
-                            <input type="text" name="name" class="form-control form-control-lg" 
-                                   value="<?php echo htmlspecialchars($product->name ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
+                            <input type="text" id="name" name="name" class="form-control form-control-lg" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label"><i class="fas fa-list me-2"></i>Danh mục sản phẩm</label>
-                            <select name="category_id" class="form-select form-select-lg" required>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?php echo $category->id; ?>" <?php echo ($category->id == $product->category_id) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($category->name); ?>
-                                    </option>
-                                <?php endforeach; ?>
+                            <select id="category_id" name="category_id" class="form-select form-select-lg" required>
+                                <option value="" selected disabled>Đang tải danh mục...</option>
                             </select>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label"><i class="fas fa-align-left me-2"></i>Mô tả chi tiết</label>
-                            <textarea name="description" class="form-control" rows="3" required><?php echo htmlspecialchars($product->description ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                            <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-money-bill-wave me-2"></i>Giá (VNĐ)</label>
-                                <input type="number" name="price" class="form-control" 
-                                       value="<?php echo htmlspecialchars($product->price ?? 0, ENT_QUOTES, 'UTF-8'); ?>" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="fas fa-camera me-2"></i>Thay đổi ảnh</label>
-                                <input type="file" name="image" id="imageInput" class="form-control" accept="image/*">
-                            </div>
-                        </div>
-
-                        <!-- Khu vực hiển thị ảnh -->
-                        <div class="mb-4 text-center">
-                            <p class="small text-muted mb-2 fw-bold">Xem trước hình ảnh:</p>
-                            <div class="img-preview-container">
-                                <?php if (!empty($product->image)): ?>
-                                    <img src="/<?php echo $product->image; ?>" id="preview" class="img-preview" alt="Ảnh sản phẩm">
-                                <?php else: ?>
-                                    <img src="https://via.placeholder.com/150?text=No+Image" id="preview" class="img-preview" alt="Chưa có ảnh">
-                                <?php endif; ?>
-                            </div>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-money-bill-wave me-2"></i>Giá (VNĐ)</label>
+                            <input type="number" id="price" name="price" class="form-control" required>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -100,14 +73,67 @@
     </div>
 </div>
 
-<!-- JavaScript để xem trước ảnh -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-    document.getElementById('imageInput').onchange = evt => {
-        const [file] = document.getElementById('imageInput').files;
-        if (file) {
-            document.getElementById('preview').src = URL.createObjectURL(file);
+$(document).ready(function() {
+    const productId = $('#id').val();
+
+    // Load category and product info
+    $.ajax({
+        url: '/api/category',
+        type: 'GET',
+        dataType: 'json',
+        success: function(categories) {
+            const categorySelect = $('#category_id');
+            categorySelect.empty();
+            categories.forEach(category => {
+                categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+            });
+
+            // Sau khi load xong danh mục thì load thông tin sản phẩm
+            $.ajax({
+                url: `/api/product/${productId}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(product) {
+                    $('#name').val(product.name);
+                    $('#description').val(product.description);
+                    $('#price').val(product.price);
+                    $('#category_id').val(product.category_id);
+                }
+            });
         }
-    }
+    });
+
+    // Handle update
+    $('#edit-product-form').on('submit', function(e) {
+        e.preventDefault();
+        const jsonData = {
+            id: $('#id').val(),
+            name: $('#name').val(),
+            description: $('#description').val(),
+            price: $('#price').val(),
+            category_id: $('#category_id').val()
+        };
+
+        $.ajax({
+            url: `/api/product/${jsonData.id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(jsonData),
+            success: function(response) {
+                if (response.message === 'Product updated successfully') {
+                    window.location.href = '/Product/list';
+                } else {
+                    alert('Cập nhật sản phẩm thất bại');
+                }
+            },
+            error: function() {
+                alert('Có lỗi xảy ra khi cập nhật!');
+            }
+        });
+    });
+});
 </script>
 
 </body>
