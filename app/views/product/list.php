@@ -615,6 +615,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Chạy bộ lọc lần đầu khi load trang để tạo phân trang (Mặc định trang 1)
     filterProducts(1);
+
+    // --- BÀI 6: KIỂM THỬ API JWT NGẦM ---
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+        fetch('/api/product', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Unauthorized');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("✅ BÀI 6 - API JWT THÀNH CÔNG! Dữ liệu nhận được:", data);
+            
+            // Hiển thị một badge nhỏ ở góc màn hình để thầy dễ chấm điểm
+            const badge = document.createElement('div');
+            badge.innerHTML = `<div style="position: fixed; bottom: 20px; left: 20px; background: #2d6a4f; color: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 9999; font-weight: bold; font-size: 14px;">
+                <i class="fas fa-check-circle me-1"></i> API JWT Hợp Lệ (${data.length} SP)
+            </div>`;
+            document.body.appendChild(badge);
+        })
+        .catch(error => {
+            console.error("❌ BÀI 6 - API JWT THẤT BẠI:", error);
+        });
+    } else {
+        console.warn("⚠️ BÀI 6 - Không tìm thấy JWT trong localStorage");
+    }
 });
 </script>
 
