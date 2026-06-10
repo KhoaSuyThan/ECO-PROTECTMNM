@@ -68,6 +68,8 @@ document.getElementById('togglePassword').addEventListener('click', function() {
 
 // Xóa JWT token cũ (nếu có) khi người dùng vừa vào trang login (VD: sau khi logout)
 localStorage.removeItem('jwtToken');
+localStorage.removeItem('refreshToken');
+localStorage.removeItem('user');
 
 // Xử lý lưu JWT vào localStorage khi đăng nhập
 document.getElementById('loginForm').addEventListener('submit', function(event) {
@@ -79,24 +81,31 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
         jsonData[key] = value;
     });
 
-    fetch('/User/checkLogin', {
+    fetch('/api/auth/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(jsonData)
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.token) {
-            localStorage.setItem('jwtToken', data.token); // Lưu token
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Đăng nhập thất bại'); });
         }
-        // Tiếp tục submit form gốc để tạo Session PHP
+        return response.json();
+    })
+    .then(data => {
+        if (data.access_token) {
+            localStorage.setItem('jwtToken', data.access_token);
+            localStorage.setItem('refreshToken', data.refresh_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        // Tiếp tục submit form gốc để tạo Session PHP để đồng bộ view MVC thường
         this.submit();
     })
     .catch(error => {
-        console.error("Lỗi lấy JWT:", error);
-        this.submit(); // Vẫn tiếp tục submit form kể cả khi lỗi API JWT
+        alert(error.message);
+        console.error("Lỗi đăng nhập API:", error);
     });
 });
 </script>

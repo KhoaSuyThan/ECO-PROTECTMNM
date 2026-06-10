@@ -152,6 +152,12 @@
                                 </div>
                             </div>
 
+                            <!-- Hình ảnh sản phẩm -->
+                            <div class="col-12 mb-4">
+                                <label class="form-label"><i class="fas fa-image"></i>Hình ảnh sản phẩm</label>
+                                <input type="file" id="image" name="image" class="form-control" accept="image/*">
+                            </div>
+
                             <!-- Mô tả -->
                             <div class="col-12 mb-4">
                                 <label class="form-label"><i class="fas fa-align-left"></i>Mô tả & Thành phần</label>
@@ -178,6 +184,13 @@
 
 <script>
 $(document).ready(function() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        alert('Vui lòng đăng nhập bằng tài khoản Admin.');
+        window.location.href = '/User/login';
+        return;
+    }
+
     // Load categories via API
     $.ajax({
         url: '/api/category',
@@ -200,38 +213,27 @@ $(document).ready(function() {
     $('#add-product-form').on('submit', function(e) {
         e.preventDefault();
         
-        const jsonData = {
-            name: $('#name').val(),
-            description: $('#description').val(),
-            price: $('#price').val(),
-            category_id: $('#category_id').val()
-        };
+        // Sử dụng FormData để hỗ trợ upload file
+        const formData = new FormData(this);
 
         $.ajax({
             url: '/api/product',
             type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(jsonData),
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            data: formData,
+            processData: false, // không xử lý data
+            contentType: false, // bắt buộc khi gửi FormData
             success: function(response) {
-                if (response.message === 'Product created successfully') {
-                    window.location.href = '/Product/list';
-                } else {
-                    alert('Thêm sản phẩm thất bại');
-                }
+                alert(response.message || 'Thêm sản phẩm thành công!');
+                window.location.href = '/Product/list';
             },
             error: function(xhr) {
                 console.error("Error:", xhr.responseText);
                 try {
                     const res = JSON.parse(xhr.responseText);
-                    if (res.errors) {
-                        let errorMsg = 'Lỗi validation:\n';
-                        for (const key in res.errors) {
-                            errorMsg += `- ${res.errors[key]}\n`;
-                        }
-                        alert(errorMsg);
-                    } else {
-                        alert('Lỗi thêm sản phẩm!');
-                    }
+                    alert(res.message || 'Lỗi thêm sản phẩm!');
                 } catch(e) {
                     alert('Lỗi thêm sản phẩm!');
                 }

@@ -386,7 +386,6 @@
             </div>
         </div>
     </div>
-
     <div class="search-filter-container">
         <div class="row g-3 align-items-center">
             <div class="col-md-4">
@@ -395,7 +394,7 @@
                     <input type="text" id="search-input" class="form-control search-control" placeholder="Tìm kiếm sản phẩm theo tên...">
                 </div>
             </div>
-            <div class="col-md-8">
+            <div class="col-md-5">
                 <div class="d-flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: none;">
                     <button class="btn filter-btn active" data-category="all">Tất cả sản phẩm</button>
                     <?php if (!empty($categories)): ?>
@@ -407,42 +406,124 @@
                     <?php endif; ?>
                 </div>
             </div>
+            <div class="col-md-3">
+                <select id="sort-select" class="form-select border-0 bg-light py-2 rounded-3 fw-bold text-muted" style="height: 45px;">
+                    <option value="">Sắp xếp mặc định</option>
+                    <option value="price_asc">Giá tăng dần</option>
+                    <option value="price_desc">Giá giảm dần</option>
+                </select>
+            </div>
+        </div>
+        <div class="row g-3 align-items-center mt-2">
+            <div class="col-md-6 d-flex align-items-center gap-2">
+                <span class="fw-bold text-muted text-nowrap">Khoảng giá:</span>
+                <input type="number" id="min-price-input" class="form-control form-control-sm rounded-3 border-0 bg-light" placeholder="Từ (đ)" style="height: 38px;">
+                <span>-</span>
+                <input type="number" id="max-price-input" class="form-control form-control-sm rounded-3 border-0 bg-light" placeholder="Đến (đ)" style="height: 38px;">
+                <button id="price-filter-btn" class="btn btn-sm btn-success rounded-pill px-3 py-2 fw-bold">Lọc giá</button>
+            </div>
         </div>
     </div>
 
     <div class="row g-4" id="product-grid">
-        <?php if (empty($products)): ?>
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-seedling fa-4x text-muted opacity-25 mb-3"></i>
-                <h3 class="text-secondary">Chưa có sản phẩm nào được đăng bán.</h3>
+        <!-- JS will dynamically populate here -->
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Đang tải...</span>
             </div>
-        <?php else: ?>
-            <?php foreach ($products as $product): ?>
-            <div class="col-sm-6 col-lg-3 product-item-card fade-in" 
-                 data-name="<?php echo htmlspecialchars(mb_strtolower($product->name, 'UTF-8')); ?>" 
-                 data-category="<?php echo $product->category_id; ?>">
-                
+        </div>
+    </div>
+
+    <nav id="pagination-container" class="mt-5 mb-5 d-flex justify-content-center"></nav>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('search-input');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sortSelect = document.getElementById('sort-select');
+    const minPriceInput = document.getElementById('min-price-input');
+    const maxPriceInput = document.getElementById('max-price-input');
+    const priceFilterBtn = document.getElementById('price-filter-btn');
+    const productGrid = document.getElementById('product-grid');
+    
+    let state = {
+        name: '',
+        category_id: 'all',
+        min_price: '',
+        max_price: '',
+        sort: '',
+        page: 1,
+        limit: 8
+    };
+
+    function fetchProducts() {
+        productGrid.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+        `;
+
+        let url = `/api/product?page=${state.page}&limit=${state.limit}`;
+        if (state.name) url += `&name=${encodeURIComponent(state.name)}`;
+        if (state.category_id !== 'all') url += `&category_id=${state.category_id}`;
+        if (state.min_price) url += `&min_price=${state.min_price}`;
+        if (state.max_price) url += `&max_price=${state.max_price}`;
+        if (state.sort) url += `&sort=${state.sort}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                renderProducts(data.products || []);
+                renderPagination(data.total_pages || 1);
+            })
+            .catch(err => {
+                console.error("Lỗi fetch sản phẩm:", err);
+                productGrid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                        <h4 class="text-secondary">Không thể kết nối API sản phẩm.</h4>
+                    </div>
+                `;
+            });
+    }
+
+    function renderProducts(products) {
+        if (products.length === 0) {
+            productGrid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-seedling fa-4x text-muted opacity-25 mb-3"></i>
+                    <h3 class="text-secondary">Không tìm thấy sản phẩm nào phù hợp.</h3>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        products.forEach(p => {
+            const formattedPrice = Number(p.price).toLocaleString('vi-VN');
+            const imgHtml = p.image 
+                ? `<img src="/${p.image}" class="card-img-top" alt="${p.name}">`
+                : `<div class="bg-light h-100 w-100 d-flex align-items-center justify-content-center">
+                       <i class="fas fa-image fa-3x text-muted opacity-20"></i>
+                   </div>`;
+
+            html += `
+            <div class="col-sm-6 col-lg-3 product-item-card fade-in">
                 <div class="card product-card">
                     <div class="card-img-container">
                         <span class="eco-badge">
-                            <i class="fas fa-tag me-1"></i><?php echo htmlspecialchars($product->category_name ?? 'Eco'); ?>
+                            <i class="fas fa-tag me-1"></i>${p.category_name || 'Eco'}
                         </span>
-
-
-
-                        <?php if (!empty($product->image)): ?>
-                            <img src="/<?php echo $product->image; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product->name); ?>">
-                        <?php else: ?>
-                            <div class="bg-light h-100 w-100 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-image fa-3x text-muted opacity-20"></i>
-                            </div>
-                        <?php endif; ?>
+                        ${imgHtml}
                     </div>
 
                     <div class="card-body p-4 d-flex flex-column justify-content-between flex-grow-1">
                         <div>
-                            <h5 class="product-title" title="<?php echo htmlspecialchars($product->name); ?>">
-                                <?php echo htmlspecialchars($product->name); ?>
+                            <h5 class="product-title" title="${p.name}">
+                                ${p.name}
                             </h5>
                             
                             <div class="d-flex align-items-center mb-3">
@@ -460,89 +541,31 @@
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <div>
                                     <div class="price-label">Giá đóng góp</div>
-                                    <div class="price-value text-nowrap"><?php echo number_format((float)$product->price, 0, ',', '.'); ?> <small>đ</small></div>
+                                    <div class="price-value text-nowrap">${formattedPrice} <small>đ</small></div>
                                 </div>
                                 
-                                <form action="/Product/addToCart/<?php echo $product->id; ?>" method="POST" class="d-flex align-items-center m-0 gap-1">
+                                <div class="d-flex align-items-center m-0 gap-1">
                                     <div class="d-flex align-items-center qty-input-container">
                                         <button type="button" class="qty-btn" onclick="let input = this.nextElementSibling; if(input.value > 1) input.value--;"><i class="fas fa-minus" style="font-size: 8px;"></i></button>
-                                        <input type="number" name="quantity" value="1" min="1" class="qty-input-field qty-input border-0 text-center p-0">
+                                        <input type="number" value="1" min="1" class="qty-input-field qty-input border-0 text-center p-0" id="qty-${p.id}">
                                         <button type="button" class="qty-btn" onclick="this.previousElementSibling.value++;"><i class="fas fa-plus" style="font-size: 8px;"></i></button>
                                     </div>
-                                    <button type="submit" class="btn-cart shadow-sm d-flex align-items-center justify-content-center p-0 flex-shrink-0">
+                                    <button type="button" onclick="addToCartAPI(${p.id})" class="btn-cart shadow-sm d-flex align-items-center justify-content-center p-0 flex-shrink-0">
                                         <i class="fas fa-shopping-basket" style="font-size: 14px;"></i>
                                     </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
 
-                        <a href="/Product/show/<?php echo $product->id; ?>" class="btn-view-detail-card">
+                        <a href="/Product/show/${p.id}" class="btn-view-detail-card">
                             <i class="fas fa-eye me-1"></i> Xem chi tiết
                         </a>
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <nav id="pagination-container" class="mt-5 mb-5 d-flex justify-content-center"></nav>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('search-input');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const productCards = document.querySelectorAll('.product-item-card');
-    
-    const itemsPerPage = 8;
-    let currentPage = 1;
-
-    function filterProducts(page = 1) {
-        currentPage = page;
-        const searchTerm = searchInput.value.toLowerCase().trim();
-        const activeBtn = document.querySelector('.filter-btn.active');
-        const selectedCategory = activeBtn ? activeBtn.getAttribute('data-category') : 'all';
-
-        let matchedCards = [];
-
-        // 1. Tìm tất cả các card thỏa mãn điều kiện lọc và tìm kiếm
-        productCards.forEach(card => {
-            const name = card.getAttribute('data-name');
-            const categoryId = card.getAttribute('data-category');
-
-            const matchesSearch = name.includes(searchTerm);
-            const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory;
-
-            if (matchesSearch && matchesCategory) {
-                matchedCards.push(card);
-            } else {
-                card.style.display = 'none';
-                card.classList.remove('fade-in');
-            }
+            `;
         });
-
-        // 2. Tính toán phân trang cho các card đã được lọc
-        const totalPages = Math.ceil(matchedCards.length / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-
-        // 3. Hiển thị các card thuộc trang hiện tại
-        matchedCards.forEach((card, index) => {
-            if (index >= startIndex && index < endIndex) {
-                card.style.display = '';
-                // Kích hoạt lại hiệu ứng fade-in
-                card.classList.remove('fade-in');
-                void card.offsetWidth; // Trigger reflow
-                card.classList.add('fade-in');
-            } else {
-                card.style.display = 'none';
-                card.classList.remove('fade-in');
-            }
-        });
-
-        // 4. Render lại nút phân trang
-        renderPagination(totalPages);
+        productGrid.innerHTML = html;
     }
 
     function renderPagination(totalPages) {
@@ -556,12 +579,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút Previous
         const prevLi = document.createElement('li');
-        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.className = `page-item ${state.page === 1 ? 'disabled' : ''}`;
         prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous"><i class="fas fa-chevron-left" style="font-size: 0.9rem;"></i></a>`;
         prevLi.addEventListener('click', (e) => {
             e.preventDefault();
-            if (currentPage > 1) {
-                filterProducts(currentPage - 1);
+            if (state.page > 1) {
+                state.page--;
+                fetchProducts();
                 document.getElementById('product-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
@@ -570,14 +594,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Các nút số trang
         for (let i = 1; i <= totalPages; i++) {
             const li = document.createElement('li');
-            li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+            li.className = `page-item ${state.page === i ? 'active' : ''}`;
             const a = document.createElement('a');
             a.className = 'page-link';
             a.href = '#';
             a.textContent = i;
             a.addEventListener('click', (e) => {
                 e.preventDefault();
-                filterProducts(i);
+                state.page = i;
+                fetchProducts();
                 document.getElementById('product-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             li.appendChild(a);
@@ -586,12 +611,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Nút Next
         const nextLi = document.createElement('li');
-        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.className = `page-item ${state.page === totalPages ? 'disabled' : ''}`;
         nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><i class="fas fa-chevron-right" style="font-size: 0.9rem;"></i></a>`;
         nextLi.addEventListener('click', (e) => {
             e.preventDefault();
-            if (currentPage < totalPages) {
-                filterProducts(currentPage + 1);
+            if (state.page < totalPages) {
+                state.page++;
+                fetchProducts();
                 document.getElementById('product-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
@@ -600,54 +626,111 @@ document.addEventListener('DOMContentLoaded', function () {
         paginationContainer.appendChild(ul);
     }
 
-    // Lắng nghe sự kiện tìm kiếm (Reset về trang 1)
-    searchInput.addEventListener('input', () => filterProducts(1));
+    // Debounce search
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            state.name = searchInput.value.trim();
+            state.page = 1;
+            fetchProducts();
+        }, 300);
+    });
 
-    // Lắng nghe sự kiện chọn bộ lọc (Reset về trang 1)
+    // Category filter
     filterButtons.forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             filterButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            filterProducts(1);
+            state.category_id = this.getAttribute('data-category');
+            state.page = 1;
+            fetchProducts();
         });
     });
 
-    // Chạy bộ lọc lần đầu khi load trang để tạo phân trang (Mặc định trang 1)
-    filterProducts(1);
+    // Sort selection
+    sortSelect.addEventListener('change', () => {
+        state.sort = sortSelect.value;
+        state.page = 1;
+        fetchProducts();
+    });
 
-    // --- BÀI 6: KIỂM THỬ API JWT NGẦM ---
-    const token = localStorage.getItem('jwtToken');
-    if (token) {
-        fetch('/api/product', {
-            method: 'GET',
+    // Price range filter
+    priceFilterBtn.addEventListener('click', () => {
+        state.min_price = minPriceInput.value.trim();
+        state.max_price = maxPriceInput.value.trim();
+        state.page = 1;
+        fetchProducts();
+    });
+
+    // Hàm global để gọi API thêm vào giỏ hàng
+    window.addToCartAPI = function(productId) {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.');
+            window.location.href = '/User/login';
+            return;
+        }
+
+        const qtyInput = document.getElementById(`qty-${productId}`);
+        const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
+
+        fetch('/api/cart', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
-            }
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Unauthorized');
+                return response.json().then(err => { throw new Error(err.message || 'Lỗi thêm vào giỏ hàng'); });
             }
             return response.json();
         })
         .then(data => {
-            console.log("✅ BÀI 6 - API JWT THÀNH CÔNG! Dữ liệu nhận được:", data);
-            
-            // Hiển thị một badge nhỏ ở góc màn hình để thầy dễ chấm điểm
-            const badge = document.createElement('div');
-            badge.innerHTML = `<div style="position: fixed; bottom: 20px; left: 20px; background: #2d6a4f; color: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 9999; font-weight: bold; font-size: 14px;">
-                <i class="fas fa-check-circle me-1"></i> API JWT Hợp Lệ (${data.length} SP)
-            </div>`;
-            document.body.appendChild(badge);
+            alert(data.message || 'Đã thêm sản phẩm vào giỏ hàng!');
+            updateCartBadge();
         })
         .catch(error => {
-            console.error("❌ BÀI 6 - API JWT THẤT BẠI:", error);
+            alert(error.message);
+            console.error('Lỗi Cart API:', error);
         });
-    } else {
-        console.warn("⚠️ BÀI 6 - Không tìm thấy JWT trong localStorage");
+    };
+
+    function updateCartBadge() {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) return;
+        fetch('/api/cart', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const count = data.cart ? data.cart.length : 0;
+            let badge = document.querySelector('.nav-link[href="/Product/cart"] .badge');
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    badge.style.fontSize = '0.7rem';
+                    document.querySelector('.nav-link[href="/Product/cart"]').appendChild(badge);
+                }
+                badge.textContent = count;
+            } else {
+                if (badge) badge.remove();
+            }
+        })
+        .catch(err => console.log('Lỗi cập nhật badge giỏ hàng:', err));
     }
+
+    // Chạy lần đầu
+    fetchProducts();
+    updateCartBadge();
 });
 </script>
 

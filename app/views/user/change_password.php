@@ -70,6 +70,52 @@ function setupToggle(buttonId, inputId, iconId) {
 
 setupToggle('toggleCurrentPassword', 'current_password', 'toggleCurrentIcon');
 setupToggle('toggleNewPassword', 'new_password', 'toggleNewIcon');
+
+document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        window.location.href = '/User/login';
+        return;
+    }
+
+    const formData = new FormData(this);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+        jsonData[key] = value;
+    });
+
+    fetch('/api/auth/change-password', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('jwtToken');
+                throw new Error('Unauthorized: Phiên đăng nhập hết hạn');
+            }
+            return response.json().then(err => { throw new Error(err.message || 'Lỗi đổi mật khẩu'); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message || 'Đổi mật khẩu thành công!');
+        // Gửi form gốc để cập nhật PHP Session đồng bộ
+        this.submit();
+    })
+    .catch(error => {
+        alert(error.message);
+        if (error.message.includes('Phiên đăng nhập hết hạn')) {
+            window.location.href = '/User/login';
+        }
+    });
+});
 </script>
 
 <?php include 'app/shares/footer.php'; ?>
