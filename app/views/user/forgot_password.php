@@ -36,4 +36,34 @@
     </div>
 </div>
 
+<script>
+document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+
+    fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Lỗi gửi yêu cầu'); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message || 'Đã gửi yêu cầu đặt lại mật khẩu.');
+        // Gửi form gốc để đồng bộ hiển thị của view PHP
+        this.submit();
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('Lỗi forgot password:', error);
+    });
+});
+</script>
+
 <?php include 'app/shares/footer.php'; ?>

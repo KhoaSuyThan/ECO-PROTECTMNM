@@ -241,11 +241,6 @@ class ProductController {
     }
 
     public function checkout() {
-        $cartKey = $this->getCartKey();
-        if (!isset($_SESSION[$cartKey]) || empty($_SESSION[$cartKey])) {
-            header('Location: /Product/list');
-            exit();
-        }
         include 'app/views/product/checkout.php';
     }
 

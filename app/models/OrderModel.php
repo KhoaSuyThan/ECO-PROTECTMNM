@@ -82,5 +82,88 @@ class OrderModel {
             'details' => $details
         ];
     }
+
+    public function createOrder($user_id, $name, $phone, $address, $cart_items) {
+        $this->conn->beginTransaction();
+        try {
+            $query = "INSERT INTO orders (user_id, name, phone, address, status, payment_status, payment_method) 
+                      VALUES (:user_id, :name, :phone, :address, 'pending', 'unpaid', 'COD')";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([
+                ':user_id' => $user_id,
+                ':name' => htmlspecialchars(strip_tags($name)),
+                ':phone' => htmlspecialchars(strip_tags($phone)),
+                ':address' => htmlspecialchars(strip_tags($address))
+            ]);
+            $order_id = $this->conn->lastInsertId();
+
+            foreach ($cart_items as $item) {
+                $queryDetail = "INSERT INTO order_details (order_id, product_id, quantity, price) 
+                                VALUES (:order_id, :product_id, :quantity, :price)";
+                $stmtDetail = $this->conn->prepare($queryDetail);
+                $stmtDetail->execute([
+                    ':order_id' => $order_id,
+                    ':product_id' => $item->product_id,
+                    ':quantity' => $item->quantity,
+                    ':price' => $item->price
+                ]);
+            }
+
+            // Xóa sạch giỏ hàng của user sau khi đặt hàng thành công
+            $queryClearCart = "DELETE FROM cart WHERE user_id = :user_id";
+            $stmtClear = $this->conn->prepare($queryClearCart);
+            $stmtClear->execute([':user_id' => $user_id]);
+
+            $this->conn->commit();
+            return $order_id;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
+
+    public function cancelOrder($order_id, $user_id) {
+        // Kiểm tra xem đơn hàng có thuộc về user này và ở trạng thái pending không
+        $queryCheck = "SELECT status FROM orders WHERE id = :order_id AND user_id = :user_id";
+        $stmtCheck = $this->conn->prepare($queryCheck);
+        $stmtCheck->execute([
+            ':order_id' => $order_id,
+            ':user_id' => $user_id
+        ]);
+        $order = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) return false;
+        if ($order['status'] !== 'pending') return false; // Chỉ cho phép hủy khi đang pending
+
+        $queryUpdate = "UPDATE orders SET status = 'cancelled' WHERE id = :order_id";
+        $stmtUpdate = $this->conn->prepare($queryUpdate);
+        return $stmtUpdate->execute([':order_id' => $order_id]);
+    }
+
+    public function updateOrderStatus($order_id, $status) {
+        $query = "UPDATE orders SET status = :status WHERE id = :order_id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([
+            ':status' => $status,
+            ':order_id' => $order_id
+        ]);
+    }
+
+    public function updatePaymentStatus($order_id, $payment_status, $payment_method = 'COD') {
+        $query = "UPDATE orders SET payment_status = :payment_status, payment_method = :payment_method WHERE id = :order_id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([
+            ':payment_status' => $payment_status,
+            ':payment_method' => $payment_method,
+            ':order_id' => $order_id
+        ]);
+    }
+
+    public function getOrderById($order_id) {
+        $query = "SELECT * FROM orders WHERE id = :order_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([':order_id' => $order_id]);
+        return $stmt->fetch(PDO::FETCH_OBJ);
+    }
 }
 ?>

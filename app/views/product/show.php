@@ -244,12 +244,12 @@ include 'app/shares/header.php';
                     <hr class="my-3 opacity-50">
 
                     <!-- Form Thêm vào giỏ hàng thực tế -->
-                    <form action="/Product/addToCart/<?php echo $product->id; ?>" method="POST" class="d-flex align-items-center gap-3 mb-4">
+                    <form id="addToCartForm" class="d-flex align-items-center gap-3 mb-4">
                         <div>
                             <span class="small fw-bold d-block mb-1 text-muted">SỐ LƯỢNG</span>
                             <div class="qty-input-container">
                                 <button type="button" class="qty-btn" onclick="let input = this.nextElementSibling; if(input.value > 1) input.value--;"><i class="fas fa-minus" style="font-size: 9px;"></i></button>
-                                <input type="number" name="quantity" value="1" min="1" class="qty-input-field qty-input">
+                                <input type="number" id="productQuantity" name="quantity" value="1" min="1" class="qty-input-field qty-input">
                                 <button type="button" class="qty-btn" onclick="this.previousElementSibling.value++;"><i class="fas fa-plus" style="font-size: 9px;"></i></button>
                             </div>
                         </div>
@@ -280,5 +280,91 @@ include 'app/shares/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const product_id = <?php echo (int)$product->id; ?>;
+    const addToCartForm = document.getElementById('addToCartForm');
+    const deleteBtn = document.querySelector('.btn-outline-danger');
+
+    // Handle add to cart
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.');
+                window.location.href = '/User/login';
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('productQuantity').value) || 1;
+
+            fetch('/api/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    product_id: product_id,
+                    quantity: quantity
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Lỗi thêm vào giỏ hàng'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message || 'Đã thêm sản phẩm vào giỏ hàng thành công!');
+                // Chuyển hướng hoặc ở lại
+                window.location.href = '/Product/cart';
+            })
+            .catch(error => {
+                alert(error.message);
+                console.error('Lỗi Cart API:', error);
+            });
+        });
+    }
+
+    // Handle delete via API if Admin
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('Hết hạn phiên đăng nhập. Vui lòng đăng nhập lại.');
+                window.location.href = '/User/login';
+                return;
+            }
+
+            fetch('/api/product/' + product_id, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Lỗi xóa sản phẩm'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message || 'Xóa sản phẩm thành công!');
+                window.location.href = '/Product/list';
+            })
+            .catch(error => {
+                alert(error.message);
+                console.error('Lỗi xóa sản phẩm API:', error);
+            });
+        });
+    }
+});
+</script>
 
 <?php include 'app/shares/footer.php'; ?>

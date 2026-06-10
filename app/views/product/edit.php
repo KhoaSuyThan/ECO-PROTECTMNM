@@ -28,7 +28,7 @@
                 <div class="card-header-eco shadow-sm">
                     <i class="fas fa-leaf fa-3x mb-3"></i>
                     <h2 class="fw-bold mb-0">Cập Nhật Eco</h2>
-                    <p class="small mb-0 opacity-75">Chỉnh sửa thông tin sản phẩm mã #<?php echo $product->id; ?></p>
+                    <p class="small mb-0 opacity-75">Chỉnh sửa thông tin sản phẩm mã #<?php echo isset($product) ? $product->id : (isset($editId) ? $editId : 0); ?></p>
                 </div>
 
                 <div class="card-body p-4 p-md-5">
@@ -46,6 +46,11 @@
                             <select id="category_id" name="category_id" class="form-select form-select-lg" required>
                                 <option value="" selected disabled>Đang tải danh mục...</option>
                             </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-image me-2"></i>Hình ảnh sản phẩm mới</label>
+                            <input type="file" id="image" name="image" class="form-control form-control-lg" accept="image/*">
                         </div>
 
                         <div class="mb-3">
@@ -76,6 +81,13 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 $(document).ready(function() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        alert('Vui lòng đăng nhập với tài khoản Admin.');
+        window.location.href = '/User/login';
+        return;
+    }
+
     const productId = $('#id').val();
 
     // Load category and product info
@@ -108,28 +120,31 @@ $(document).ready(function() {
     // Handle update
     $('#edit-product-form').on('submit', function(e) {
         e.preventDefault();
-        const jsonData = {
-            id: $('#id').val(),
-            name: $('#name').val(),
-            description: $('#description').val(),
-            price: $('#price').val(),
-            category_id: $('#category_id').val()
-        };
+        
+        // Dùng FormData để hỗ trợ upload file trong PHP
+        const formData = new FormData(this);
 
         $.ajax({
-            url: `/api/product/${jsonData.id}`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(jsonData),
-            success: function(response) {
-                if (response.message === 'Product updated successfully') {
-                    window.location.href = '/Product/list';
-                } else {
-                    alert('Cập nhật sản phẩm thất bại');
-                }
+            url: `/api/product/${productId}`,
+            type: 'POST', // Dùng POST để PHP parse $_FILES dễ dàng
+            headers: {
+                'Authorization': 'Bearer ' + token
             },
-            error: function() {
-                alert('Có lỗi xảy ra khi cập nhật!');
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert(response.message || 'Cập nhật sản phẩm thành công!');
+                window.location.href = '/Product/list';
+            },
+            error: function(xhr) {
+                console.error("Error:", xhr.responseText);
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    alert(res.message || 'Lỗi cập nhật sản phẩm!');
+                } catch(e) {
+                    alert('Lỗi cập nhật sản phẩm!');
+                }
             }
         });
     });

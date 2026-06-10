@@ -19,47 +19,114 @@
                             <th class="text-center" style="width: 150px;">Thao tác</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($categories)): ?>
-                            <tr><td colspan="4" class="text-center py-4 text-muted">Chưa có danh mục nào.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($categories as $cat): ?>
-                            <tr>
-                                <td class="text-muted">#<?php echo $cat->id; ?></td>
-                                <td class="fw-bold text-dark"><?php echo htmlspecialchars($cat->name); ?></td>
-                                <td class="text-secondary small"><?php echo htmlspecialchars($cat->description); ?></td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <a href="/category/edit/<?php echo $cat->id; ?>" class="btn btn-sm btn-outline-warning border-0"><i class="fas fa-edit"></i></a>
-                                        <a href="/category/delete/<?php echo $cat->id; ?>" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Xóa danh mục này sẽ xóa toàn bộ sản phẩm thuộc danh mục. Bạn chắc chắn chứ?')"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                    <tbody id="category-table-body">
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Đang tải danh mục...</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-            
-            <!-- Phân trang -->
-            <?php if (isset($total_pages) && $total_pages > 1): ?>
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item <?php echo $current_page <= 1 ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $current_page - 1; ?>" tabindex="-1">Trước</a>
-                        </li>
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <li class="page-item <?php echo $current_page == $i ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?php echo $current_page >= $total_pages ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $current_page + 1; ?>">Sau</a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('category-table-body');
+    const token = localStorage.getItem('jwtToken');
+
+    if (!token) {
+        alert('Vui lòng đăng nhập với tài khoản Admin.');
+        window.location.href = '/User/login';
+        return;
+    }
+
+    function fetchCategories() {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Đang tải danh mục...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        fetch('/api/category')
+        .then(res => res.json())
+        .then(data => {
+            renderCategories(data);
+        })
+        .catch(err => {
+            console.error("Lỗi tải danh mục:", err);
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-danger">Không thể tải dữ liệu từ API danh mục.</td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderCategories(categories) {
+        if (categories.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Chưa có danh mục nào.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        categories.forEach(cat => {
+            html += `
+                <tr>
+                    <td class="text-muted">#${cat.id}</td>
+                    <td class="fw-bold text-dark">${escapeHtml(cat.name)}</td>
+                    <td class="text-secondary small">${escapeHtml(cat.description || '')}</td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a href="/category/edit/${cat.id}" class="btn btn-sm btn-outline-warning border-0"><i class="fas fa-edit"></i></a>
+                            <button onclick="deleteCategory(${cat.id})" class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = html;
+    }
+
+    window.deleteCategory = function(catId) {
+        if (!confirm('Bạn chắc chắn muốn xóa danh mục này?')) return;
+
+        fetch('/api/category/' + catId, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message || 'Lỗi xóa danh mục'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message || 'Xóa danh mục thành công!');
+            fetchCategories();
+        })
+        .catch(error => {
+            alert(error.message);
+            console.error('Lỗi khi xóa danh mục:', error);
+        });
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    fetchCategories();
+});
+</script>
 <?php include 'app/shares/footer.php'; ?>

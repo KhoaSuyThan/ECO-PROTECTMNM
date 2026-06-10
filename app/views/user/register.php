@@ -60,6 +60,37 @@ document.getElementById('togglePassword').addEventListener('click', function() {
         icon.classList.add('fa-eye');
     }
 });
+
+document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+        jsonData[key] = value;
+    });
+
+    fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Đăng ký thất bại'); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message || 'Đăng ký tài khoản thành công!');
+        window.location.href = '/User/login';
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('Lỗi đăng ký API:', error);
+    });
+});
 </script>
 
 <?php include 'app/shares/footer.php'; ?>

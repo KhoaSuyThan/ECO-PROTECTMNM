@@ -169,4 +169,42 @@ class UserModel {
         }
         return false;
     }
+
+    public function getUserByUsernameOrEmail($username) {
+        $query = "SELECT * FROM users WHERE username = :username OR email = :username";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([':username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function incrementFailedAttempts($id) {
+        $query = "UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    public function lockAccount($id, $lockUntil) {
+        $query = "UPDATE users SET status = 'locked', lock_until = :lock_until WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([':lock_until' => $lockUntil, ':id' => $id]);
+    }
+
+    public function unlockAccount($id) {
+        $query = "UPDATE users SET status = 'active', failed_attempts = 0, lock_until = NULL WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    public function updateRefreshToken($id, $token) {
+        $query = "UPDATE users SET refresh_token = :token WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([':token' => $token, ':id' => $id]);
+    }
+
+    public function getUserByRefreshToken($token) {
+        $query = "SELECT * FROM users WHERE refresh_token = :token";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([':token' => $token]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

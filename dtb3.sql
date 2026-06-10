@@ -45,14 +45,17 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email_verified_at` datetime DEFAULT NULL,
   `verification_token` varchar(255) DEFAULT NULL,
   `status` enum('active','locked') NOT NULL DEFAULT 'active',
+  `failed_attempts` int NOT NULL DEFAULT '0',
+  `lock_until` datetime DEFAULT NULL,
+  `refresh_token` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table eco_protect_store.users: ~2 rows (approximately)
-INSERT INTO `users` (`id`, `username`, `password`, `role`, `email`, `fullname`, `phone`, `address`, `avatar`, `remember_token`, `reset_token`, `reset_token_expire`, `email_verified_at`, `verification_token`, `status`) VALUES
-	(2, 'Nguyễn Võ Lê Khoa', '$2y$10$uFiCMOIF3jOQzEUa.40ZQ.zSODkmLecMTXphc2jDfCRaKPcWG7GNa', 'admin', 'khoanv249@gmail.com', 'Nguyễn Võ Lê Khoa', '0374139213', 'Khánh Cường', 'uploads/avatars/1780467661_z7663179523952_3b7aec3e9d4a38e7cd5b9a583e372fbf.jpg', NULL, NULL, NULL, NULL, NULL, 'active'),
-	(4, 'Nguyễn Tư', '$2y$10$F2xI/oygfmuxmbRwniP2eegEC9xkygZ.6aIZPdDXGHSYSECkhdPOm', 'user', 'tunguyen200295.tgdd@gmail.com', '', '', '', 'uploads/avatars/1780468117_z7670832089429_f83c4c93282391c55a7e24148643db4e.jpg', NULL, NULL, NULL, '2026-06-03 13:27:02', NULL, 'active');
+INSERT INTO `users` (`id`, `username`, `password`, `role`, `email`, `fullname`, `phone`, `address`, `avatar`, `remember_token`, `reset_token`, `reset_token_expire`, `email_verified_at`, `verification_token`, `status`, `failed_attempts`, `lock_until`, `refresh_token`) VALUES
+	(2, 'Nguyễn Võ Lê Khoa', '$2y$10$uFiCMOIF3jOQzEUa.40ZQ.zSODkmLecMTXphc2jDfCRaKPcWG7GNa', 'admin', 'khoanv249@gmail.com', 'Nguyễn Võ Lê Khoa', '0374139213', 'Khánh Cường', 'uploads/avatars/1780467661_z7663179523952_3b7aec3e9d4a38e7cd5b9a583e372fbf.jpg', NULL, NULL, NULL, NULL, NULL, 'active', 0, NULL, NULL),
+	(4, 'Nguyễn Tư', '$2y$10$F2xI/oygfmuxmbRwniP2eegEC9xkygZ.6aIZPdDXGHSYSECkhdPOm', 'user', 'tunguyen200295.tgdd@gmail.com', '', '', '', 'uploads/avatars/1780468117_z7670832089429_f83c4c93282391c55a7e24148643db4e.jpg', NULL, NULL, NULL, '2026-06-03 13:27:02', NULL, 'active', 0, NULL, NULL);
 
 -- Dumping structure for table eco_protect_store.product
 CREATE TABLE IF NOT EXISTS `product` (
@@ -80,6 +83,19 @@ INSERT INTO `product` (`id`, `name`, `description`, `price`, `image`, `category_
 	(8, 'Nước lau sàn Enzyme cam dứa', 'Lên men tự nhiên từ vỏ cam và vỏ dứa (phế phẩm nông nghiệp). Làm sạch bóng sàn nhà, xua đuổi côn trùng (kiến, muỗi, gián) mà không để lại màng hóa chất dính chân.', 125000.00, 'uploads/1779259513_lausan.jfif', 3, '2026-05-20 06:45:13'),
 	(9, 'Nước rửa tay tạo bọt thảo mộc', 'Chiết xuất từ dịch truyền lá trầu không và trà xanh giúp kháng khuẩn tự nhiên. Thiết kế chai thủy tinh có thể mang ra cửa hàng để refill (lấp đầy lại) khi dùng hết.', 67000.00, 'uploads/1779259559_ruatay.jfif', 3, '2026-05-20 06:45:59');
 
+-- Dumping structure for table eco_protect_store.cart
+CREATE TABLE IF NOT EXISTS `cart` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `quantity` int NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Dumping structure for table eco_protect_store.orders
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -88,15 +104,18 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `address` text NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `user_id` int DEFAULT NULL,
+  `status` enum('pending','confirmed','shipping','completed','cancelled') NOT NULL DEFAULT 'pending',
+  `payment_status` enum('unpaid','paid') NOT NULL DEFAULT 'unpaid',
+  `payment_method` varchar(50) NOT NULL DEFAULT 'COD',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table eco_protect_store.orders: ~0 rows (approximately)
-INSERT INTO `orders` (`id`, `name`, `phone`, `address`, `created_at`, `user_id`) VALUES
-	(1, '1', '1', '1', '2026-06-03 01:17:18', 2),
-	(2, 'Nguyễn Võ Lê Khoa', '0374139213', 'Khánh Cường', '2026-06-03 01:49:33', NULL);
+-- Dumping data for table eco_protect_store.orders: ~2 rows (approximately)
+INSERT INTO `orders` (`id`, `name`, `phone`, `address`, `created_at`, `user_id`, `status`, `payment_status`, `payment_method`) VALUES
+	(1, '1', '1', '1', '2026-06-03 01:17:18', 2, 'pending', 'unpaid', 'COD'),
+	(2, 'Nguyễn Võ Lê Khoa', '0374139213', 'Khánh Cường', '2026-06-03 01:49:33', NULL, 'pending', 'unpaid', 'COD');
 
 -- Dumping structure for table eco_protect_store.order_details
 CREATE TABLE IF NOT EXISTS `order_details` (
@@ -112,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `order_details` (
   CONSTRAINT `order_details_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table eco_protect_store.order_details: ~0 rows (approximately)
+-- Dumping data for table eco_protect_store.order_details: ~2 rows (approximately)
 INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
 	(1, 1, 3, 2, 10000.00),
 	(2, 2, 2, 1, 10000.00);
