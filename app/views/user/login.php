@@ -15,7 +15,7 @@
                         <div class="alert alert-danger"><?php echo $error; ?></div>
                     <?php endif; ?>
 
-                    <form action="/User/processLogin" method="POST">
+                    <form id="loginForm" action="/User/processLogin" method="POST">
                         <div class="mb-3">
                             <label class="form-label text-muted fw-bold">Tên đăng nhập hoặc Email</label>
                             <input type="text" name="username" class="form-control form-control-lg bg-light border-0" required>
@@ -64,6 +64,40 @@ document.getElementById('togglePassword').addEventListener('click', function() {
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
     }
+});
+
+// Xóa JWT token cũ (nếu có) khi người dùng vừa vào trang login (VD: sau khi logout)
+localStorage.removeItem('jwtToken');
+
+// Xử lý lưu JWT vào localStorage khi đăng nhập
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Tạm dừng submit form để gọi API lấy token
+
+    const formData = new FormData(this);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+        jsonData[key] = value;
+    });
+
+    fetch('/User/checkLogin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.token) {
+            localStorage.setItem('jwtToken', data.token); // Lưu token
+        }
+        // Tiếp tục submit form gốc để tạo Session PHP
+        this.submit();
+    })
+    .catch(error => {
+        console.error("Lỗi lấy JWT:", error);
+        this.submit(); // Vẫn tiếp tục submit form kể cả khi lỗi API JWT
+    });
 });
 </script>
 

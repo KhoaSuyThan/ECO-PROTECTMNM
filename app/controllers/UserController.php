@@ -1,13 +1,16 @@
 <?php
 require_once 'app/config/database.php';
 require_once 'app/models/UserModel.php';
+require_once 'app/utils/JWTHandler.php';
 
 class UserController {
     private $userModel;
+    private $jwtHandler;
 
     public function __construct() {
         $db = (new Database())->getConnection();
         $this->userModel = new UserModel($db);
+        $this->jwtHandler = new JWTHandler();
     }
 
     public function login() {
@@ -353,5 +356,23 @@ class UserController {
         
         header('Location: /User/profile');
         exit();
+    }
+
+    public function checkLogin()
+    {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        $username = $data['username'] ?? '';
+        $password = $data['password'] ?? '';
+        
+        $user = $this->userModel->login($username, $password);
+        
+        if ($user) {
+            $token = $this->jwtHandler->encode(['id' => $user['id'], 'username' => $user['username']]);
+            echo json_encode(['token' => $token]);
+        } else {
+            http_response_code(401);
+            echo json_encode(['message' => 'Invalid credentials']);
+        }
     }
 }
