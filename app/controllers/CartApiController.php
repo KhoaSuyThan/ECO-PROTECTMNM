@@ -1,8 +1,4 @@
 <?php
-require_once 'app/config/database.php';
-require_once 'app/models/CartModel.php';
-require_once 'app/models/ProductModel.php';
-require_once 'app/utils/JWTMiddleware.php';
 
 class CartApiController
 {

@@ -1,7 +1,4 @@
 <?php
-require_once 'app/config/database.php';
-require_once 'app/models/CategoryModel.php';
-require_once 'app/utils/JWTMiddleware.php';
 
 class CategoryApiController
 {

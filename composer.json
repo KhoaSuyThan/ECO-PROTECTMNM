@@ -1,0 +1,18 @@
+{
+    "name": "eco-protect/eco-protectmnm",
+    "description": "Dự án ECO-PROTECTMNM tích hợp Composer và Frontend SPA",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "firebase/php-jwt": "^6.0",
+        "phpmailer/phpmailer": "^6.8"
+    },
+    "autoload": {
+        "classmap": [
+            "app/config/",
+            "app/controllers/",
+            "app/models/",
+            "app/utils/"
+        ]
+    }
+}
