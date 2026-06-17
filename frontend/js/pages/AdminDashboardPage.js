@@ -21,7 +21,9 @@ export async function renderAdminDashboardPage() {
             <div class="admin-sidebar">
                 <div class="admin-menu-item active" data-tab="stats">Thống kê chung</div>
                 <div class="admin-menu-item" data-tab="products">Quản lý sản phẩm</div>
+                <div class="admin-menu-item" data-tab="categories">Quản lý danh mục</div>
                 <div class="admin-menu-item" data-tab="orders">Quản lý đơn hàng</div>
+                <div class="admin-menu-item" data-tab="users">Quản lý người dùng</div>
             </div>
 
             <!-- Main Panel -->
@@ -105,8 +107,12 @@ export async function renderAdminDashboardPage() {
                 await renderStats();
             } else if (currentTab === 'products') {
                 await renderProducts();
+            } else if (currentTab === 'categories') {
+                await renderCategories();
             } else if (currentTab === 'orders') {
                 await renderOrders();
+            } else if (currentTab === 'users') {
+                await renderUsers();
             }
         } catch (err) {
             mainPanel.innerHTML = `<p style="color: var(--danger); text-align: center;">Lỗi tải dữ liệu quản trị: ${err.message}</p>`;
@@ -353,6 +359,182 @@ export async function renderAdminDashboardPage() {
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Cập nhật';
+            }
+        });
+    }
+
+    // 4. Tab Quản lý danh mục
+    async function renderCategories() {
+        const categories = await api.categories.getCategories();
+        store.setCategories(categories);
+
+        mainPanel.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="color: var(--gray-800);">Quản lý danh mục sản phẩm</h2>
+                <button id="add-cat-btn" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> Thêm danh mục
+                </button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Mã danh mục</th>
+                            <th>Tên danh mục</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-cat-tbody">
+                        ${categories.map(c => `
+                            <tr data-id="${c.id}">
+                                <td style="font-weight: 700;">#${c.id}</td>
+                                <td style="font-weight: 600;">${escapeHTML(c.name)}</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm edit-cat-btn" style="padding: 0.4rem 0.8rem; margin-right: 0.25rem;"><i class="fa-solid fa-pen"></i> Sửa</button>
+                                    <button class="btn btn-danger btn-sm delete-cat-btn" style="padding: 0.4rem 0.8rem;"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // Thêm danh mục mới
+        document.getElementById('add-cat-btn').addEventListener('click', async () => {
+            const name = prompt('Nhập tên danh mục mới:');
+            if (name && name.trim()) {
+                try {
+                    await api.categories.addCategory(name.trim());
+                    showAlert('Đã thêm danh mục mới thành công!', 'success');
+                    loadTabContent();
+                } catch (err) {
+                    showAlert(err.message || 'Lỗi thêm danh mục', 'danger');
+                }
+            }
+        });
+
+        // Sửa / Xóa danh mục
+        const tbody = document.getElementById('admin-cat-tbody');
+        tbody.addEventListener('click', async (e) => {
+            const row = e.target.closest('tr');
+            if (!row) return;
+            const catId = row.dataset.id;
+            const category = categories.find(c => c.id == catId);
+
+            // Sửa danh mục
+            if (e.target.closest('.edit-cat-btn')) {
+                const newName = prompt('Nhập tên mới cho danh mục:', category.name);
+                if (newName && newName.trim() && newName.trim() !== category.name) {
+                    try {
+                        await api.categories.updateCategory(catId, newName.trim());
+                        showAlert('Đã cập nhật tên danh mục thành công!', 'success');
+                        loadTabContent();
+                    } catch (err) {
+                        showAlert(err.message || 'Lỗi sửa danh mục', 'danger');
+                    }
+                }
+            }
+
+            // Xóa danh mục
+            if (e.target.closest('.delete-cat-btn')) {
+                if (confirm(`Bạn có chắc muốn xóa danh mục "${category.name}"? (Tất cả sản phẩm thuộc danh mục sẽ bị ảnh hưởng)`)) {
+                    try {
+                        await api.categories.deleteCategory(catId);
+                        showAlert('Đã xóa danh mục thành công!', 'success');
+                        loadTabContent();
+                    } catch (err) {
+                        showAlert(err.message || 'Lỗi xóa danh mục', 'danger');
+                    }
+                }
+            }
+        });
+    }
+
+    // 5. Tab Quản lý người dùng
+    async function renderUsers() {
+        const users = await api.auth.listUsers();
+
+        const roleLabels = {
+            'admin': 'Quản trị viên',
+            'user': 'Khách hàng'
+        };
+
+        mainPanel.innerHTML = `
+            <h2 style="margin-bottom: 1.5rem; color: var(--gray-800);">Quản lý người dùng trong hệ thống</h2>
+
+            <div style="overflow-x: auto;">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Mã KH</th>
+                            <th>Username</th>
+                            <th>Họ tên</th>
+                            <th>Email / SĐT</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-tbody">
+                        ${users.map(u => {
+                            const isLocked = u.status === 'locked';
+                            return `
+                                <tr data-id="${u.id}">
+                                    <td style="font-weight: 700;">#${u.id}</td>
+                                    <td><strong>${escapeHTML(u.username)}</strong></td>
+                                    <td>${escapeHTML(u.fullname || '-')}</td>
+                                    <td>
+                                        <div>${escapeHTML(u.email)}</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray-600);">${escapeHTML(u.phone || '-')}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${u.role === 'admin' ? 'badge-primary' : 'badge-success'}">${roleLabels[u.role] || u.role}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}">${isLocked ? 'Bị khóa' : 'Hoạt động'}</span>
+                                    </td>
+                                    <td>
+                                        ${u.role === 'admin' ? `
+                                            <span style="font-size: 0.85rem; color: var(--gray-600);">Không khóa được Admin</span>
+                                        ` : `
+                                            <button class="btn ${isLocked ? 'btn-primary' : 'btn-danger'} btn-sm toggle-status-btn" style="padding: 0.4rem 0.8rem;" data-id="${u.id}">
+                                                ${isLocked ? '<i class="fa-solid fa-lock-open"></i> Mở khóa' : '<i class="fa-solid fa-lock"></i> Khóa'}
+                                            </button>
+                                        `}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // Khóa / Mở khóa người dùng
+        const tbody = document.getElementById('admin-users-tbody');
+        tbody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.toggle-status-btn');
+            if (!btn) return;
+
+            const userId = btn.dataset.id;
+            const user = users.find(u => u.id == userId);
+            const isLocked = user.status === 'locked';
+            const actionText = isLocked ? 'mở khóa' : 'khóa';
+
+            if (confirm(`Bạn chắc chắn muốn ${actionText} tài khoản của "${user.username}"?`)) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                try {
+                    await api.auth.toggleUserStatus(userId);
+                    showAlert(`Đã ${actionText} tài khoản "${user.username}" thành công!`, 'success');
+                    loadTabContent();
+                } catch (err) {
+                    showAlert(err.message || 'Lỗi cập nhật trạng thái', 'danger');
+                    loadTabContent();
+                }
             }
         });
     }
