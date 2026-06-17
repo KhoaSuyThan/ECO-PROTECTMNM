@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/vendor/autoload.php';
+
 if (isset($_GET['update_db_now']) || strpos($_SERVER['REQUEST_URI'], 'alter_db') !== false || strpos($_SERVER['REQUEST_URI'], 'update_db') !== false) {
-    require_once 'app/config/database.php';
     try {
         $db = (new Database())->getConnection();
         
@@ -54,9 +55,7 @@ if (isset($_GET['update_db_now']) || strpos($_SERVER['REQUEST_URI'], 'alter_db')
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once 'app/config/database.php';
-require_once 'app/models/ProductModel.php';
-require_once 'app/models/UserModel.php';
+
 
 // Auto login
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
@@ -88,7 +87,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Auth Routes
     if ($resource === 'auth') {
-        require_once 'app/controllers/AuthApiController.php';
         $controller = new AuthApiController();
         $action = $url[2] ?? '';
         
@@ -119,7 +117,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Product Routes
     if ($resource === 'product') {
-        require_once 'app/controllers/ProductApiController.php';
         $controller = new ProductApiController();
         $id = $url[2] ?? null;
         
@@ -144,7 +141,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Category Routes
     if ($resource === 'category') {
-        require_once 'app/controllers/CategoryApiController.php';
         $controller = new CategoryApiController();
         $id = $url[2] ?? null;
         
@@ -169,7 +165,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Cart Routes
     if ($resource === 'cart') {
-        require_once 'app/controllers/CartApiController.php';
         $controller = new CartApiController();
         $id = $url[2] ?? null;
         
@@ -194,7 +189,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Order Routes
     if ($resource === 'order') {
-        require_once 'app/controllers/OrderApiController.php';
         $controller = new OrderApiController();
         $id = $url[2] ?? null;
         $subAction = $url[3] ?? null;
@@ -225,7 +219,6 @@ if (isset($url[0]) && $url[0] === 'api' && isset($url[1])) {
     
     // Payment Routes
     if ($resource === 'payment') {
-        require_once 'app/controllers/PaymentApiController.php';
         $controller = new PaymentApiController();
         
         if ($method === 'POST') {

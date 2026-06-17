@@ -1,10 +1,4 @@
 <?php
-require_once __DIR__ . '/../vendor/firebase/src/JWTExceptionWithPayloadInterface.php';
-require_once __DIR__ . '/../vendor/firebase/src/BeforeValidException.php';
-require_once __DIR__ . '/../vendor/firebase/src/ExpiredException.php';
-require_once __DIR__ . '/../vendor/firebase/src/SignatureInvalidException.php';
-require_once __DIR__ . '/../vendor/firebase/src/JWT.php';
-require_once __DIR__ . '/../vendor/firebase/src/Key.php';
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;

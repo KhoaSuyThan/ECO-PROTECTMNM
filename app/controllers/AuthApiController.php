@@ -1,8 +1,4 @@
 <?php
-require_once 'app/config/database.php';
-require_once 'app/models/UserModel.php';
-require_once 'app/utils/JWTHandler.php';
-require_once 'app/utils/JWTMiddleware.php';
 
 class AuthApiController
 {
